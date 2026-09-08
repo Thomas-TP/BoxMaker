@@ -64,6 +64,18 @@ fn prism_xz(points: &[[f64; 2]], length: f64) -> Manifold {
         .rotate(-90., 0., 0.)
 }
 
+fn printable(solid: &Manifold) -> Result<Manifold, String> {
+    let (mut vertices, stride, triangles) = solid.to_mesh_f64();
+    // Resolve floating-point seams on a 0.1 micron grid, then let Manifold
+    // rebuild the topology instead of dropping triangles from an open mesh.
+    for value in &mut vertices {
+        *value = (*value * 10_000.).round() / 10_000.;
+    }
+    Manifold::from_mesh_f64(&vertices, stride, &triangles)
+        .map(|s| s.as_original().simplify(0.0001))
+        .map_err(|e| format!("Préparation du maillage imprimable : {e}"))
+}
+
 pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
     let mut inner = p.object.map(|v| v + 2. * p.padding);
     // Do not shorten the compliant beam for small objects. Its length is a
@@ -240,7 +252,11 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
     if !top_ribs.is_empty() {
         lid_adds.push(&Manifold::batch_union(&top_ribs).intersection(&rib_mask) - &flex_bay);
     }
-    let lid = Manifold::batch_union(&lid_adds);
+    // Boolean intersections can leave sub-micron edges. Remove them before
+    // float32 STL / six-decimal 3MF conversion collapses adjacent vertices.
+    // 0.0001 mm is far below printing clearance and layer dimensions.
+    let body = printable(&body)?;
+    let lid = printable(&Manifold::batch_union(&lid_adds))?;
     for (name, solid) in [("boîte", &body), ("couvercle", &lid)] {
         solid
             .status()

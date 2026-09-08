@@ -1,6 +1,6 @@
 # Fermeture coulissante à pression
 
-La v0.2.0 comporte deux pièces : une coque nervurée fermée et un couvercle coulissant avec languette intégrée à l’arrière. Les rails retiennent le couvercle verticalement ; la dent de la languette bloque son glissement. Appuyer sur la zone striée, tirer de quelques millimètres, puis relâcher et retirer le couvercle.
+La v0.2.1 comporte deux pièces : une coque nervurée fermée et un couvercle coulissant avec languette intégrée à l’arrière. Les rails retiennent le couvercle verticalement ; la dent de la languette bloque son glissement. Appuyer sur la zone striée, tirer de quelques millimètres, puis relâcher et retirer le couvercle.
 
 ## Choix et références
 
@@ -29,6 +29,8 @@ Comparaison à cavité utile identique, avec 5 mm de calage par face et densité
 ## Validation
 
 Les tests automatisés vérifient : volumes uniques fermés et orientés, espace réservé à l’objet, absence d’intersection à l’état fermé, verrouillage au retrait, dégagement après pression et retrait libre. Plusieurs jeux et dimensions sont testés. La déformation illustrée est une approximation cinématique, pas une simulation mécanique de contraintes.
+
+Les jonctions géométriques sont reconstruites sur une grille de 0,0001 mm avant triangulation finale, pour éviter des micro-arêtes qui s’effondrent à la précision du STL. L’aperçu et les exports utilisent ces mêmes maillages. Un test relit les coordonnées des fichiers STL et 3MF et vérifie les triangles et leurs arêtes après conversion.
 
 Essai physique à effectuer :
 

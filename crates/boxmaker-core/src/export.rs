@@ -72,6 +72,100 @@ pub fn three_mf(mesh: &Mesh, name: &str) -> Result<Vec<u8>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+
+    fn assert_closed_faces(faces: impl Iterator<Item = [[f64; 3]; 3]>) {
+        let mut edges = HashMap::new();
+        for [a, b, c] in faces {
+            assert!(
+                a != b && b != c && c != a,
+                "collapsed export triangle: {a:?}, {b:?}, {c:?}"
+            );
+            let u: [f64; 3] = std::array::from_fn(|i| b[i] - a[i]);
+            let v: [f64; 3] = std::array::from_fn(|i| c[i] - a[i]);
+            let cross = [
+                u[1] * v[2] - u[2] * v[1],
+                u[2] * v[0] - u[0] * v[2],
+                u[0] * v[1] - u[1] * v[0],
+            ];
+            assert!(cross.iter().any(|n| *n != 0.), "zero-area export triangle");
+            let key = |p: [f64; 3]| p.map(|x| if x == 0. { 0 } else { x.to_bits() });
+            for (u, v) in [(a, b), (b, c), (c, a)] {
+                *edges.entry((key(u), key(v))).or_insert(0usize) += 1;
+            }
+        }
+        assert!(
+            edges
+                .iter()
+                .all(|(&(u, v), &n)| n == 1 && edges.get(&(v, u)) == Some(&1)),
+            "export is not closed and oriented after coordinate conversion"
+        );
+    }
+
+    #[test]
+    fn serialized_coordinates_preserve_closed_nondegenerate_meshes() {
+        for (object, padding, wall, floor, clearance) in [
+            ([30., 40., 10.], 0., 1.2, 0.8, 0.3),
+            ([10.; 3], 0., 1.2, 0.8, 0.15),
+            ([100., 70., 30.], 5., 1.2, 0.8, 0.3),
+            ([220., 210., 200.], 0., 1.2, 0.8, 0.6),
+            ([10.; 3], 0., 5., 6., 0.6),
+        ] {
+            let design = crate::calculate(&crate::Params {
+                object,
+                padding,
+                wall,
+                floor,
+                clearance,
+                ..Default::default()
+            })
+            .unwrap();
+            for part in design.parts {
+                println!("STL: {object:?}, gap {clearance}, {}", part.id);
+                let bytes = stl(&part.mesh);
+                assert_closed_faces(bytes[84..].chunks_exact(50).map(|record| {
+                    std::array::from_fn(|i| {
+                        std::array::from_fn(|j| {
+                            let offset = 12 + i * 12 + j * 4;
+                            f32::from_le_bytes(record[offset..offset + 4].try_into().unwrap())
+                                as f64
+                        })
+                    })
+                }));
+                let bytes = three_mf(&part.mesh, &part.name).unwrap();
+                println!("3MF: {object:?}, gap {clearance}, {}", part.id);
+                let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).unwrap();
+                let mut model = String::new();
+                std::io::Read::read_to_string(
+                    &mut archive.by_name("3D/3dmodel.model").unwrap(),
+                    &mut model,
+                )
+                .unwrap();
+                let attribute = |element: &str, name: &str| -> f64 {
+                    element
+                        .split_once(&format!("{name}=\""))
+                        .unwrap()
+                        .1
+                        .split('"')
+                        .next()
+                        .unwrap()
+                        .parse()
+                        .unwrap()
+                };
+                let vertices: Vec<[f64; 3]> = model
+                    .split("<vertex ")
+                    .skip(1)
+                    .map(|v| [attribute(v, "x"), attribute(v, "y"), attribute(v, "z")])
+                    .collect();
+                assert_closed_faces(
+                    model.split("<triangle ").skip(1).map(|t| {
+                        ["v1", "v2", "v3"].map(|name| vertices[attribute(t, name) as usize])
+                    }),
+                );
+            }
+        }
+    }
+
     #[test]
     fn stl_length_and_3mf_package() {
         let d = crate::calculate(&crate::Params::default()).unwrap();

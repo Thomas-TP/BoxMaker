@@ -6,6 +6,14 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.2.1] - 2026-09-08
+
+### Corrigé
+
+- Reconstruction des micro-arêtes avant export pour éviter des triangles dégénérés lors de la conversion STL et 3MF.
+- Test de régression sur les coordonnées réellement sérialisées, y compris une petite boîte avec des parois épaisses.
+- Première distribution du nouveau mécanisme ; la publication v0.2.0 a été interrompue avant création de la release.
+
 ## [0.2.0] - 2026-09-08
 
 ### Amélioré
@@ -46,7 +54,8 @@ Aucun changement non publié.
 - Tarifs suisses uniquement, hors options et surcoûts de traitement ; pesée finale nécessaire.
 - Exécutables non signés par un certificat d’éditeur.
 
-[Unreleased]: https://github.com/Thomas-TP/BoxMaker/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Thomas-TP/BoxMaker/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.2.1
 [0.2.0]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.2.0
 [0.1.1]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.1.0
