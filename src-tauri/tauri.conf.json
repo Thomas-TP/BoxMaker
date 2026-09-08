@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Boxmaker",
+  "version": "0.1.0",
+  "identifier": "ch.swiss3design.boxmaker",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [{ "title": "Boxmaker · Swiss3Design", "width": 1440, "height": 940, "minWidth": 960, "minHeight": 700 }],
+    "security": { "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost; worker-src 'self' blob:" }
+  },
+  "bundle": { "active": false, "icon": [] }
+}

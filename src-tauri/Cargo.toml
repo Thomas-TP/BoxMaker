@@ -1,0 +1,17 @@
+[package]
+name = "boxmaker"
+version.workspace = true
+edition.workspace = true
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+boxmaker-core = { path = "../crates/boxmaker-core" }
+velopack = "1.2"
+tauri-plugin-dialog = "2"
+serde.workspace = true

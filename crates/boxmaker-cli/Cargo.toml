@@ -1,0 +1,8 @@
+[package]
+name = "boxmaker-cli"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+boxmaker-core = { path = "../boxmaker-core" }
+serde_json.workspace = true

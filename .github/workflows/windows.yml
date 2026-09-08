@@ -1,0 +1,109 @@
+name: Windows · checks & releases
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  build:
+    name: Validate and package Windows x64
+    runs-on: windows-2025
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: .bun-version
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install the tested Rust toolchain
+        shell: pwsh
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal --component clippy --component rustfmt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rustup default 1.98.0
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Restore locked dependencies
+        shell: pwsh
+        run: |
+          bun install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet tool restore
+      - name: Check source, tests, versions and release notes
+        shell: pwsh
+        run: |
+          bun run check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          bun run release:check
+      - name: Build the desktop application
+        run: bun run desktop:build
+      - name: Create Velopack packages and checksums
+        run: bun run package:windows -- -SkipBuild
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: boxmaker-windows-x64
+          path: artifacts/releases/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish the tagged release
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    needs: build
+    runs-on: windows-2025
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: boxmaker-windows-x64
+          path: artifacts/releases
+      - name: Restore the pinned Velopack CLI
+        run: dotnet tool restore
+      - name: Publish notes and validated packages
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_COMMIT: ${{ github.sha }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($env:RELEASE_TAG -ne "v$version") { throw 'Tag/version mismatch.' }
+          $preview = $version.StartsWith('0.') -or $version.Contains('-')
+          $existingJson = gh release view $env:RELEASE_TAG --json isDraft 2>$null
+          $existing = if ($LASTEXITCODE -eq 0) { $existingJson | ConvertFrom-Json } else { $null }
+          if ($existing -and -not $existing.isDraft) { throw 'A published release is immutable. Create a new version.' }
+          $arguments = @('upload', 'github', '--repoUrl', "https://github.com/$env:GH_REPO", '--token', $env:GH_TOKEN, '--outputDir', 'artifacts/releases', '--tag', $env:RELEASE_TAG, '--targetCommitish', $env:RELEASE_COMMIT, '--releaseName', "Boxmaker $env:RELEASE_TAG")
+          if ($preview) { $arguments += '--pre' }
+          if ($existing) { $arguments += '--merge' }
+          dotnet tool run vpk -- @arguments
+          if ($LASTEXITCODE -ne 0) { throw 'Velopack upload failed.' }
+          gh release upload $env:RELEASE_TAG artifacts/releases/SHA256SUMS.txt --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Checksum upload failed.' }
+          $edit = @('release', 'edit', $env:RELEASE_TAG, '--draft=false', '--notes-file', "docs/releases/$env:RELEASE_TAG.md")
+          if ($preview) { $edit += @('--prerelease', '--latest=false') }
+          gh @edit
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed.' }
