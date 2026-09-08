@@ -1,6 +1,6 @@
 # Boxmaker · Swiss3Design
 
-Application Windows locale pour concevoir une boîte d’expédition imprimée en PLA, visualiser ses trois pièces et comparer les tarifs de la Poste suisse.
+Application Windows locale pour concevoir une boîte d’expédition imprimée en PLA, visualiser ses deux pièces et comparer les tarifs de la Poste suisse. La fermeture coulissante à pression remplace la clavette séparée ; les anciens projets conservent leur géométrie.
 
 [Télécharger la préversion Windows](https://github.com/Thomas-TP/BoxMaker/releases) · [Notes de version](CHANGELOG.md) · [Compilation et releases](https://github.com/Thomas-TP/BoxMaker/actions)
 
@@ -11,10 +11,10 @@ L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmak
 1. Saisir les dimensions en **mm**, le poids de l’objet en **g**, et le calage par face.
 2. Choisir **Bambu Lab P1S (256³ mm)** ou **Creality K2 classique (260³ mm)**.
 3. Ajuster parois, fond et jeu dans les réglages avancés. Le profil est PLA ; le prix au kilo est modifiable.
-4. Inspecter les vues fermée, éclatée et pièces à plat.
-5. Exporter **chaque pièce séparément** en STL ou 3MF : boîte, couvercle, clavette. Le 3MF contient une géométrie en millimètres, sans profil machine ou G-code. La clavette se pose sur sa tête pour l’impression.
+4. Inspecter les vues fermée, éclatée, pièces à plat et ouverture. Le curseur montre la pression sur la languette arrière puis le retrait du couvercle.
+5. Exporter **chaque pièce séparément** en STL ou 3MF : boîte et couvercle. Le 3MF contient une géométrie en millimètres, sans profil machine ou G-code. Imprimer le couvercle face lisse dessous, nervures dessus. L’ancien modèle conserve sa clavette, à imprimer sur sa tête.
 6. Dans Bambu Studio ou Creality Print, vérifier l’orientation, les surplombs, les zones exclues et le poids calculé. Imprimer une petite boîte d’essai avant un emballage complet.
-7. Emballer, sécuriser la clavette avec un adhésif et peser l’envoi fermé. Saisir ce poids réel dans « J’ai pesé mon envoi fermé ».
+7. Emballer, sécuriser la fermeture avec un adhésif et peser l’envoi fermé. Saisir ce poids réel dans « J’ai pesé mon envoi fermé ».
 
 Les projets peuvent être enregistrés en `.boxmaker.json` puis rouverts. Modifier la géométrie ou le contenu efface le poids mesuré pour éviter un tarif calculé sur une ancienne pesée.
 
@@ -43,7 +43,7 @@ Ne pas lancer `dev` et `desktop` simultanément : le port 1420 est partagé.
 - `src` : React/TypeScript strict et Three.js. Le rendu utilise les mêmes triangles que les exports.
 - `scripts/package-windows.ps1` : création du package Velopack depuis un répertoire de staging dédié.
 
-Le moteur Rust réalise des unions/soustractions exactes de volumes rectilignes via une grille construite sur les frontières des primitives. Il ne s’agit pas d’une approximation par voxels de taille fixe. Les faces internes sont supprimées et les sommets partagés. Ce moteur est volontairement limité à cette famille de boîtes ; il n’importe pas de modèles STL arbitraires et ne remplace pas un noyau CAO généraliste. Manifold n’est pas nécessaire à cette première géométrie.
+La nouvelle géométrie utilise Manifold via les bindings Rust `manifold-csg` pour les opérations booléennes, coins arrondis, nervures et languette. Son noyau C++ est compilé par CMake ; les scripts cherchent aussi CMake dans Visual Studio. Installer les outils CMake C++ si nécessaire. Le moteur rectiligne initial reste utilisé pour les anciens projets et la comparaison de matière. Aucun import de STL arbitraire n’est proposé.
 
 ## Validation et limites
 
@@ -51,7 +51,7 @@ Le moteur Rust réalise des unions/soustractions exactes de volumes rectilignes 
 - `scripts/browser-smoke.js` est un parcours Playwright CLI pour vérifier les limites P1S/K2, les tarifs lettre, le poids absent, les téléchargements et la sauvegarde/réouverture d’un projet.
 - Le contrôle de plateau considère les pièces à plat avec rotation XY à 90° et une marge par bord. Les zones exclues spécifiques du slicer P1S ne sont pas modélisées. La vue « pièces à plat » n’est pas un placement automatique sur un plateau commun.
 - La masse est estimée avec une densité de 1,24 g/cm³ et le volume solide. Le slicer, la densité réelle du filament, l’infill et la pesée finale peuvent différer. Le coût matière exclut temps, énergie, calage et affranchissement.
-- **Prototype mécanique non homologué et non imprimé lors du développement.** Le jeu, la résistance du PLA, les rails, la clavette et la protection du contenu doivent être testés physiquement. Les arêtes de cette première version sont rectilignes. Les petits surplombs des rails sont à examiner dans le slicer.
+- **Prototype mécanique non homologué et non imprimé lors du développement.** Le jeu, la fatigue de la languette PLA, les rails et la protection du contenu doivent être testés physiquement. Le petit pont arrière et les lèvres des rails sont à examiner dans le slicer. Voir [le choix mécanique et le protocole d’essai](docs/MECHANISM.md).
 - Tarifs pour les envois intérieurs en Suisse seulement, datés de 2026 ; détails dans [docs/POSTAL.md](docs/POSTAL.md).
 
 ## Velopack

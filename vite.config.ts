@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 import pkg from "./package.json" with { type: "json" };
 
 export default defineConfig({
+  optimizeDeps: { entries: ["index.html"] },
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [
     react(),
@@ -15,7 +16,8 @@ export default defineConfig({
           if (
             req.method !== "POST" ||
             (req.headers.origin &&
-              req.headers.origin !== "http://127.0.0.1:1420")
+              req.headers.origin !==
+                `http://127.0.0.1:${server.config.server.port}`)
           ) {
             res.writeHead(403).end();
             return;

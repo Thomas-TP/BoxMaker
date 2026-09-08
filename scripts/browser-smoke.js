@@ -1,7 +1,11 @@
 async (page) => {
+  await page.reload();
   const waitReady = () => page.getByText('Aperçu de votre boîte', {exact:true}).waitFor({timeout:15000});
   const assert = (ok, text) => { if (!ok) throw new Error(text); };
+  await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
   await waitReady();
+  await page.getByRole('combobox',{name:'Pièce',exact:true}).selectOption('body');
+  await page.getByRole('combobox',{name:'Format',exact:true}).selectOption('3mf');
   await page.getByRole('spinbutton',{name:'Largeur mm',exact:true}).fill('232');
   await page.getByText('Vérifiez les dimensions des pièces',{exact:true}).waitFor();
   await waitReady();
@@ -9,7 +13,7 @@ async (page) => {
   await page.getByRole('button',{name:'Creality K2 260 × 260 × 260 mm',exact:true}).click();
   await page.getByText('Chaque pièce tient sur le plateau utile',{exact:true}).waitFor();
   await waitReady();
-  assert(await page.getByRole('button',{name:'Exporter la boîte',exact:true}).isEnabled(),'K2 should accept the 247.6 mm body');
+  assert(await page.getByRole('button',{name:'Exporter la boîte',exact:true}).isEnabled(),'K2 should accept the 246.8 mm body');
   await page.getByRole('spinbutton',{name:'Poids de l’objet g',exact:true}).fill('');
   await page.getByText('Ajoutez le poids',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
@@ -43,7 +47,27 @@ async (page) => {
   await page.getByRole('button',{name:'Vue éclatée',exact:true}).click();
   await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
   await waitReady();
+  await page.getByRole('button',{name:'Ouverture',exact:true}).click();
+  for (const progress of ['0', '15', '30', '40', '100']) {
+    await page.locator('#opening-progress').fill(progress);
+    assert(await page.locator('#opening-progress').inputValue() === progress, 'Opening progress must update');
+  }
+  await page.screenshot({path:'output/playwright/opening-verified.png',fullPage:true});
+  await page.getByRole('combobox',{name:'Pièce',exact:true}).selectOption('lid');
+  for (const format of ['3mf', 'stl']) {
+    await page.getByRole('combobox',{name:'Format',exact:true}).selectOption(format);
+    const download = page.waitForEvent('download');
+    await page.getByRole('button',{name:'Exporter le couvercle',exact:true}).click();
+    await (await download).saveAs(`output/playwright/lid.${format}`);
+  }
+  await page.locator('input[type=file]').setInputFiles('scripts/fixtures/legacy.boxmaker.json');
+  await page.getByText('Projet chargé.',{exact:true}).waitFor();
+  await waitReady();
+  assert(await page.getByRole('combobox',{name:'Modèle de fermeture',exact:true}).inputValue() === 'legacy','Old projects retain the original geometry');
+  assert(await page.getByRole('combobox',{name:'Pièce',exact:true}).locator('option').count() === 3,'Old model retains three pieces');
+  await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
+  await waitReady();
   await page.screenshot({path:'output/playwright/boxmaker-verified.png',timeout:30000,fullPage:true});
   await page.evaluate(() => { document.documentElement.dataset.smoke = 'PASS'; });
-  console.log('PASS: printer boundaries, missing weight, letter rates, 3MF download, project save/load, measured weight invalidation, three view modes.');
+  console.log('PASS: printer boundaries, missing weight, letter rates, STL/3MF downloads, project save/load, legacy compatibility, measured weight invalidation, four view modes and opening slider.');
 }

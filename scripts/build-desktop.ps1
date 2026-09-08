@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
+. (Join-Path $PSScriptRoot 'rust-env.ps1')
 # Resource compiler discovery can fail outside a Visual Studio developer shell.
 if (-not (Get-Command rc.exe -ErrorAction SilentlyContinue)) {
     $sdkBin = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'

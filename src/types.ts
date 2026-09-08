@@ -1,4 +1,5 @@
 export interface Params {
+  model: "press-slide" | "legacy";
   object: [number, number, number];
   objectWeight: number | null;
   padding: number;
@@ -30,6 +31,18 @@ export interface Quote {
   delay: string;
 }
 export interface Design {
+  model: "press-slide" | "legacy";
+  referencePlasticWeight: number;
+  mechanism: {
+    tongueCenter: number;
+    tongueHalfWidth: number;
+    tongueRoot: number;
+    hookY: number;
+    releaseTravel: number;
+    beamThickness: number;
+    engagement: number;
+    lidZ: number;
+  } | null;
   outer: number[];
   inner: number[];
   objectOffset: number[];
@@ -44,12 +57,13 @@ export interface Design {
   printerVolume: number[];
 }
 export const defaults: Params = {
+  model: "press-slide",
   object: [100, 70, 30],
   objectWeight: 80,
   padding: 5,
   paddingWeight: 5,
-  wall: 1.6,
-  floor: 2,
+  wall: 1.2,
+  floor: 0.8,
   clearance: 0.3,
   printer: "p1s",
   plateMargin: 5,

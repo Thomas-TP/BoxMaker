@@ -1,13 +1,13 @@
 {
   "name": "swiss3design-boxmaker",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "packageManager": "bun@1.3.11",
   "scripts": {
-    "dev": "cargo build -p boxmaker-cli && vite --host 127.0.0.1",
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/cargo.ps1 build -p boxmaker-cli && vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
-    "check": "biome check . && tsc -b && cargo fmt --all -- --check && cargo test --locked && cargo clippy --locked -- -D warnings",
+    "check": "biome check . && tsc -b && cargo fmt --all -- --check && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/cargo.ps1 test --locked && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/cargo.ps1 clippy --locked -- -D warnings",
     "release:check": "bun scripts/check-release.ts",
     "format": "biome check --write . && cargo fmt --all",
     "tauri": "tauri",

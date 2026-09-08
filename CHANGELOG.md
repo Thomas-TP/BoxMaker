@@ -6,6 +6,17 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.2.0] - 2026-09-08
+
+### Amélioré
+
+- Fermeture coulissante à languette arrière intégrée : deux pièces au lieu de trois.
+- Parois et fond amincis avec nervures, coins arrondis ; 32 à 33 % de matière calculée en moins sur trois formats à cavité utile identique.
+- Démonstration du déverrouillage et du retrait, avec conservation de l’angle de vue pendant le mouvement.
+- Compatibilité des projets v1 et conservation du modèle à clavette.
+- Tests de verrouillage, collisions, volumes fermés, espace objet et gain de matière ; intégration de Manifold et CMake.
+- Documentation du mécanisme et du protocole d’essai physique restant à effectuer.
+
 ## [0.1.1] - 2026-09-08
 
 ### Corrigé
@@ -35,6 +46,7 @@ Aucun changement non publié.
 - Tarifs suisses uniquement, hors options et surcoûts de traitement ; pesée finale nécessaire.
 - Exécutables non signés par un certificat d’éditeur.
 
-[Unreleased]: https://github.com/Thomas-TP/BoxMaker/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Thomas-TP/BoxMaker/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.2.0
 [0.1.1]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.1.0

@@ -81,9 +81,10 @@ function Field({
 export default function App() {
   const [params, setParams] = useState<Params>(defaults);
   const [design, setDesign] = useState<Design | null>(null);
-  const [mode, setMode] = useState<"assembled" | "exploded" | "print">(
+  const [mode, setMode] = useState<"assembled" | "exploded" | "print" | "open">(
     "exploded",
   );
+  const [opening, setOpening] = useState(0);
   const [showObject, setShowObject] = useState(true);
   const [reset, setReset] = useState(0);
   const [busy, setBusy] = useState(true);
@@ -107,6 +108,7 @@ export default function App() {
         "wall",
         "floor",
         "clearance",
+        "model",
       ].includes(key)
         ? { measuredTotal: null }
         : {}),
@@ -119,7 +121,12 @@ export default function App() {
     const timer = setTimeout(() => {
       engine<Design>("calculate", params)
         .then((result) => {
-          if (id === sequence.current) setDesign(result);
+          if (id === sequence.current) {
+            setDesign(result);
+            setPart((current) =>
+              result.parts.some((p) => p.id === current) ? current : "body",
+            );
+          }
         })
         .catch((e: unknown) => {
           if (id === sequence.current) setError(String(e));
@@ -164,7 +171,7 @@ export default function App() {
   async function saveProject() {
     try {
       const saved = await download(
-        JSON.stringify({ version: 1, params }, null, 2),
+        JSON.stringify({ version: 2, params }, null, 2),
         "ma-boite.boxmaker.json",
         "application/json",
       );
@@ -180,10 +187,16 @@ export default function App() {
     try {
       if (file.size > 32768) throw new Error("Fichier trop volumineux");
       const project = JSON.parse(await file.text());
-      if (project.version !== 1 || !project.params)
+      if (![1, 2].includes(project.version) || !project.params)
         throw new Error("Projet Boxmaker incompatible");
-      await engine<Design>("calculate", project.params);
-      setParams(project.params);
+      const loaded = {
+        ...project.params,
+        model: project.params.model ?? "legacy",
+      };
+      await engine<Design>("calculate", loaded);
+      setParams(loaded);
+      setMode("exploded");
+      setOpening(0);
       setNotice("Projet chargé.");
     } catch (e) {
       setNotice(`Ouverture impossible : ${String(e)}`);
@@ -369,7 +382,9 @@ export default function App() {
             <div className="section-title">
               <span className="step">03</span>
               <h3>La boîte</h3>
-              <span className="small-badge">3 pièces</span>
+              <span className="small-badge">
+                {params.model === "press-slide" ? "2 pièces" : "3 pièces"}
+              </span>
             </div>
             <div className="field-grid two">
               <Field
@@ -383,7 +398,7 @@ export default function App() {
               <Field
                 label="Épaisseur fond"
                 value={params.floor}
-                min={1.2}
+                min={params.model === "press-slide" ? 0.8 : 1.2}
                 max={6}
                 step={0.2}
                 onChange={(v) => set("floor", v ?? 0)}
@@ -393,9 +408,42 @@ export default function App() {
               <Layers3 size={20} />
               <span>
                 <strong>Couvercle coulissant</strong>
-                <small>Rails + clavette rigide de blocage</small>
+                <small>
+                  {params.model === "press-slide"
+                    ? "Appuyer, puis tirer · verrou intégré"
+                    : "Ancien modèle · clavette séparée"}
+                </small>
               </span>
             </div>
+            <label className="model-choice">
+              Modèle de fermeture
+              <select
+                value={params.model}
+                onChange={(e) => {
+                  const model = e.target.value as Params["model"];
+                  setParams((p) => ({
+                    ...p,
+                    model,
+                    wall: model === "legacy" ? 1.6 : 1.2,
+                    floor: model === "legacy" ? 2 : 0.8,
+                    measuredTotal: null,
+                  }));
+                  setMode("exploded");
+                  setOpening(0);
+                }}
+              >
+                <option value="press-slide">
+                  Coulissant à pression · nervuré
+                </option>
+                <option value="legacy">Ancienne boîte · clavette</option>
+              </select>
+            </label>
+            {params.model === "press-slide" && (
+              <p className="construction-note">
+                Peau fermée, nervures intérieures et couvercle de 1,2 mm
+                renforcé. Pas de pièce de verrouillage à perdre.
+              </p>
+            )}
             <button
               type="button"
               className="advanced-toggle"
@@ -443,7 +491,10 @@ export default function App() {
                   onClick={() =>
                     setParams({
                       ...params,
-                      object: [20, 20, 10],
+                      object:
+                        params.model === "press-slide"
+                          ? [30, 40, 10]
+                          : [20, 20, 10],
                       padding: 0,
                       objectWeight: 5,
                       measuredTotal: null,
@@ -491,6 +542,18 @@ export default function App() {
                   {v.label}
                 </button>
               ))}
+              {params.model === "press-slide" && (
+                <button
+                  type="button"
+                  className={mode === "open" ? "active" : ""}
+                  onClick={() => {
+                    setMode("open");
+                    setOpening(0);
+                  }}
+                >
+                  Ouverture
+                </button>
+              )}
             </div>
             <Viewer
               design={design}
@@ -498,6 +561,7 @@ export default function App() {
               mode={mode}
               showObject={showObject}
               reset={reset}
+              opening={opening}
             />
             {!design && !error && (
               <div className="loading-model">
@@ -532,6 +596,33 @@ export default function App() {
               <span>mm</span>
             </div>
           </div>
+          {mode === "open" && params.model === "press-slide" && (
+            <div className="opening-control panel">
+              <label htmlFor="opening-progress">
+                <strong>
+                  {opening <= 15
+                    ? "1 · Appuyer sur la languette"
+                    : opening < 30
+                      ? "2 · Tirer le couvercle"
+                      : "3 · Relâcher et faire glisser"}
+                </strong>
+                <span>Démonstration du mouvement</span>
+              </label>
+              <input
+                id="opening-progress"
+                type="range"
+                min="0"
+                max="100"
+                value={opening}
+                onChange={(e) => setOpening(Number(e.target.value))}
+              />
+              <p>
+                Les rails retiennent le couvercle ; la languette bloque
+                uniquement le glissement. Mouvement illustratif, à confirmer par
+                impression.
+              </p>
+            </div>
+          )}
           <div className={`metrics panel ${stale ? "muted" : ""}`}>
             <div>
               <span>DIMENSIONS EXTÉRIEURES</span>
@@ -552,6 +643,26 @@ export default function App() {
               <strong>{design ? money(design.materialCost) : "—"}</strong>
             </div>
           </div>
+          {design?.model === "press-slide" && (
+            <div className={`material-saving ${stale ? "muted" : ""}`}>
+              <Sparkles size={18} />
+              <div>
+                <strong>
+                  {design.plasticWeight < design.referencePlasticWeight
+                    ? `${number((1 - design.plasticWeight / design.referencePlasticWeight) * 100)} % de PLA en moins`
+                    : "Configuration plus épaisse que la référence"}
+                </strong>
+                <span>
+                  {number(design.referencePlasticWeight)} g →{" "}
+                  {number(design.plasticWeight)} g · même volume utile
+                </span>
+                <small>
+                  Comparaison géométrique à l’ancienne boîte standard (parois
+                  1,6 / fond 2 mm). La masse du slicer peut différer.
+                </small>
+              </div>
+            </div>
+          )}
           <div className="parts-strip">
             {design?.parts.map((p, i) => (
               <div key={p.id}>
@@ -575,9 +686,10 @@ export default function App() {
           <div className="design-note">
             <Sparkles size={18} />
             <p>
-              <strong>Simple à imprimer. Pratique à ouvrir.</strong> Le
-              couvercle glisse dans ses rails. La clavette bloque son ouverture
-              ; ajoutez un adhésif pour le transport.
+              <strong>Simple à imprimer. Pratique à ouvrir.</strong>{" "}
+              {params.model === "press-slide"
+                ? "Poussez jusqu’au clic. Pour ouvrir, appuyez sur la zone striée à l’arrière, puis tirez le couvercle. Ajoutez un adhésif de scellement pour l’expédition."
+                : "Le couvercle glisse dans ses rails. La clavette bloque son ouverture ; ajoutez un adhésif pour le transport."}
             </p>
           </div>
         </section>
@@ -719,7 +831,9 @@ export default function App() {
                 <select value={part} onChange={(e) => setPart(e.target.value)}>
                   <option value="body">Boîte</option>
                   <option value="lid">Couvercle</option>
-                  <option value="key">Clavette</option>
+                  {params.model === "legacy" && (
+                    <option value="key">Clavette</option>
+                  )}
                 </select>
               </label>
               <label>
@@ -828,8 +942,8 @@ export default function App() {
                 réglable.
               </li>
               <li>
-                Exportez séparément la boîte, le couvercle et la clavette en 3MF
-                ou STL.
+                Exportez la boîte et le couvercle séparément en 3MF ou STL.
+                L’ancien modèle comporte aussi une clavette.
               </li>
               <li>
                 Dans le slicer, vérifiez la géométrie, les zones exclues,
@@ -837,8 +951,9 @@ export default function App() {
                 la petite boîte d’essai des réglages avancés.
               </li>
               <li>
-                Testez la fermeture, protégez l’objet, fixez la clavette avec un
-                adhésif et pesez l’envoi fermé.
+                Testez le clic et le déverrouillage sans forcer, protégez
+                l’objet, scellez le couvercle avec un adhésif et pesez l’envoi
+                fermé.
               </li>
             </ol>
             <h3>Formats extérieurs · Suisse</h3>

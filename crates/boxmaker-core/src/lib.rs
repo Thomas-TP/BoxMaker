@@ -1,6 +1,7 @@
 mod export;
 mod mesh;
 mod postal;
+mod press_slide;
 
 pub use mesh::Mesh;
 pub use postal::{Quote, quotes};
@@ -9,6 +10,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Params {
+    #[serde(default = "legacy_model")]
+    pub model: String,
     pub object: [f64; 3],
     pub object_weight: Option<f64>,
     pub padding: f64,
@@ -23,15 +26,20 @@ pub struct Params {
     pub measured_total: Option<f64>,
 }
 
+fn legacy_model() -> String {
+    "legacy".into()
+}
+
 impl Default for Params {
     fn default() -> Self {
         Self {
+            model: "press-slide".into(),
             object: [100., 70., 30.],
             object_weight: Some(80.),
             padding: 5.,
             padding_weight: 5.,
-            wall: 1.6,
-            floor: 2.,
+            wall: 1.2,
+            floor: 0.8,
             clearance: 0.3,
             printer: "p1s".into(),
             plate_margin: 5.,
@@ -57,6 +65,9 @@ pub struct Part {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Design {
+    pub model: String,
+    pub mechanism: Option<press_slide::Mechanism>,
+    pub reference_plastic_weight: f64,
     pub outer: [f64; 3],
     pub inner: [f64; 3],
     pub object_offset: [f64; 3],
@@ -84,7 +95,15 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
     }
     range(p.padding, 0., 100., "Calage par face (mm)")?;
     range(p.wall, 1.2, 5., "Paroi (mm)")?;
-    range(p.floor, 1.2, 6., "Fond (mm)")?;
+    if p.model != "press-slide" && p.model != "legacy" {
+        return Err("Modèle de boîte inconnu".into());
+    }
+    range(
+        p.floor,
+        if p.model == "legacy" { 1.2 } else { 0.8 },
+        6.,
+        "Fond (mm)",
+    )?;
     range(p.clearance, 0.15, 0.6, "Jeu mécanique (mm)")?;
     range(p.plate_margin, 0., 20., "Marge du plateau (mm)")?;
     range(p.padding_weight, 0., 10000., "Poids du calage (g)")?;
@@ -100,7 +119,28 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
         "k2" => [260.; 3],
         _ => return Err("Imprimante inconnue".into()),
     };
-    let (inner, outer, object_offset, raw_parts) = mesh::design(p);
+    let (inner, outer, object_offset, raw_parts, mechanism) = if p.model == "press-slide" {
+        let (inner, outer, offset, parts, mechanism) = press_slide::design(p)?;
+        (inner, outer, offset, parts, Some(mechanism))
+    } else {
+        let (inner, outer, offset, parts) = mesh::design(p);
+        (inner, outer, offset, parts, None)
+    };
+    // Compare to the released v0.1 reference at the SAME usable cavity size.
+    // Its standard walls / floor were 1.6 / 2.0 mm; no slicer infill assumptions.
+    let reference = Params {
+        object: inner.map(|v| v - 2. * p.padding),
+        wall: 1.6,
+        floor: 2.,
+        ..p.clone()
+    };
+    let reference_plastic_weight = mesh::design(&reference)
+        .3
+        .iter()
+        .map(|p| p.2.volume())
+        .sum::<f64>()
+        / 1000.
+        * 1.24;
     let parts: Vec<Part> = raw_parts
         .into_iter()
         .map(|(id, name, mut mesh, assembled_offset)| {
@@ -155,8 +195,21 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
     if p.printer == "p1s" {
         warnings.push("P1S : contrôlez aussi les zones exclues et la ligne de purge du profil Bambu Studio ; la marge rectangulaire ne les modélise pas.".into());
     }
-    warnings.push("Prototype PLA à tester : ajustement des rails, maintien de la clavette, chute et compression. Sécurisez la fermeture avec de l’adhésif.".into());
+    if p.model == "press-slide" {
+        warnings.push("Fermeture à pression : imprimez d’abord l’essai, vérifiez le clic et l’ouverture sans forcer. La durée de vie du ressort PLA et la résistance au transport restent à tester ; scellez l’envoi avec un adhésif.".into());
+        warnings.push("Boîte : fond posé au plateau. Couvercle : face lisse dessous, nervures et bouton dessus. Contrôlez le petit pont du verrou et les lèvres des rails dans le slicer.".into());
+        if inner[0] > p.object[0] + 2. * p.padding + 0.01
+            || inner[1] > p.object[1] + 2. * p.padding + 0.01
+        {
+            warnings.push("Cavité portée à au moins 30 × 40 mm pour conserver la longueur du ressort, même avec un petit objet.".into());
+        }
+    } else {
+        warnings.push("Ancien modèle à clavette : prototype PLA à tester. Sécurisez la fermeture avec de l’adhésif.".into());
+    }
     Ok(Design {
+        model: p.model.clone(),
+        mechanism,
+        reference_plastic_weight,
         outer,
         inner,
         object_offset,

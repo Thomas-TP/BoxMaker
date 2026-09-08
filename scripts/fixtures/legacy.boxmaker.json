@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "params": {
+    "object": [100, 70, 30],
+    "objectWeight": 80,
+    "padding": 5,
+    "paddingWeight": 5,
+    "wall": 1.6,
+    "floor": 2,
+    "clearance": 0.3,
+    "printer": "p1s",
+    "plateMargin": 5,
+    "online": true,
+    "filamentPrice": 25,
+    "measuredTotal": null
+  }
+}

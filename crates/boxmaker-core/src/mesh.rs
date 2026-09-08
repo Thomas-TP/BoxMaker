@@ -2,7 +2,7 @@ use crate::Params;
 use serde::Serialize;
 use std::collections::HashMap;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct Mesh {
     pub vertices: Vec<[f64; 3]>,
     pub triangles: Vec<[usize; 3]>,
@@ -153,7 +153,7 @@ fn solid(add: &[Block], subtract: &[Block]) -> Mesh {
     mesh
 }
 
-type RawPart = (&'static str, &'static str, Mesh, [f64; 3]);
+pub(crate) type RawPart = (&'static str, &'static str, Mesh, [f64; 3]);
 pub fn design(p: &Params) -> ([f64; 3], [f64; 3], [f64; 3], Vec<RawPart>) {
     let inner = p.object.map(|v| v + 2. * p.padding);
     let t = p.wall;

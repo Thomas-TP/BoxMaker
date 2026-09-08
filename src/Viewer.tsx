@@ -6,13 +6,28 @@ import type { Design, Params } from "./types";
 interface Props {
   design: Design | null;
   params: Params;
-  mode: "assembled" | "exploded" | "print";
+  mode: "assembled" | "exploded" | "print" | "open";
+  opening: number;
   showObject: boolean;
   reset: number;
 }
-export function Viewer({ design, params, mode, showObject, reset }: Props) {
+export function Viewer({
+  design,
+  params,
+  mode,
+  showObject,
+  reset,
+  opening,
+}: Props) {
   const mount = useRef<HTMLElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const viewRef = useRef<{
+    design: Design;
+    mode: Props["mode"];
+    reset: number;
+    position: THREE.Vector3;
+    target: THREE.Vector3;
+  } | null>(null);
   const [error, setError] = useState("");
   useEffect(
     () => () => {
@@ -66,10 +81,43 @@ export function Viewer({ design, params, mode, showObject, reset }: Props) {
     scene.add(model);
     let printX = 0;
     for (const [index, part] of design.parts.entries()) {
+      const vertices = part.mesh.vertices.map((v) => [...v]);
+      const mechanism = design.mechanism;
+      if (part.id === "lid" && mode === "open" && mechanism) {
+        const pressed =
+          opening < 30
+            ? Math.min(1, opening / 15)
+            : Math.max(0, (40 - opening) / 10);
+        for (const v of vertices) {
+          const x = v[0] + part.assembledOffset[0];
+          const y = v[1] + part.assembledOffset[1];
+          if (
+            Math.abs(x - mechanism.tongueCenter) <=
+              mechanism.tongueHalfWidth + 0.001 &&
+            y > mechanism.tongueRoot
+          ) {
+            const ratio = Math.min(
+              1.5,
+              Math.max(
+                0,
+                (y - mechanism.tongueRoot) /
+                  (mechanism.hookY - mechanism.tongueRoot),
+              ),
+            );
+            v[2] -=
+              (pressed *
+                mechanism.releaseTravel *
+                ratio *
+                ratio *
+                (3 - ratio)) /
+              2;
+          }
+        }
+      }
       const indexed = new THREE.BufferGeometry();
       indexed.setAttribute(
         "position",
-        new THREE.Float32BufferAttribute(part.mesh.vertices.flat(), 3),
+        new THREE.Float32BufferAttribute(vertices.flat(), 3),
       );
       indexed.setIndex(part.mesh.triangles.flat());
       const geometry = indexed.toNonIndexed();
@@ -89,6 +137,13 @@ export function Viewer({ design, params, mode, showObject, reset }: Props) {
         printX += part.size[0] + 15;
       } else {
         mesh.position.fromArray(part.assembledOffset);
+        if (part.id === "lid" && mode === "open")
+          mesh.position.y -=
+            opening < 30
+              ? Math.max(0, (opening - 15) / 15) * 8
+              : opening < 40
+                ? 8
+                : 8 + ((opening - 40) / 60) * (design.outer[1] + 2);
         if (part.id === "key") mesh.scale.z = -1;
         if (mode === "exploded") {
           if (part.id === "lid")
@@ -130,7 +185,17 @@ export function Viewer({ design, params, mode, showObject, reset }: Props) {
       model.add(mesh);
       objects.push(mesh);
     }
-    const bounds = new THREE.Box3().setFromObject(model);
+    const bounds =
+      mode === "open"
+        ? new THREE.Box3(
+            new THREE.Vector3(0, 0, -design.outer[1]),
+            new THREE.Vector3(
+              design.outer[0],
+              design.outer[2],
+              design.outer[1] + 10,
+            ),
+          )
+        : new THREE.Box3().setFromObject(model);
     const center = bounds.getCenter(new THREE.Vector3());
     const size = bounds.getSize(new THREE.Vector3());
     const extent = Math.max(size.x, size.y, size.z, 70);
@@ -174,7 +239,18 @@ export function Viewer({ design, params, mode, showObject, reset }: Props) {
       camera.updateProjectionMatrix();
     };
     resize();
-    fit();
+    const saved = viewRef.current;
+    if (
+      saved?.design === design &&
+      saved.mode === mode &&
+      saved.reset === reset
+    ) {
+      camera.position.copy(saved.position);
+      controls.target.copy(saved.target);
+      controls.update();
+    } else {
+      fit();
+    }
     const observer = new ResizeObserver(resize);
     observer.observe(host);
     let frame = 0;
@@ -185,6 +261,13 @@ export function Viewer({ design, params, mode, showObject, reset }: Props) {
     };
     animate();
     return () => {
+      viewRef.current = {
+        design,
+        mode,
+        reset,
+        position: camera.position.clone(),
+        target: controls.target.clone(),
+      };
       cancelAnimationFrame(frame);
       observer.disconnect();
       controls.dispose();
@@ -202,7 +285,7 @@ export function Viewer({ design, params, mode, showObject, reset }: Props) {
       }
       sun.shadow.dispose();
     };
-  }, [design, params.object, mode, showObject, reset]);
+  }, [design, params.object, mode, showObject, reset, opening]);
   return (
     <section
       className="three-view"
