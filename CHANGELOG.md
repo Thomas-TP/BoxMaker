@@ -1,10 +1,18 @@
 # Historique des versions
 
-Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possède des notes détaillées dans `docs/releases/vX.Y.Z.md` et une release GitHub avec ses binaires Windows.
+Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possède des notes détaillées dans `docs/releases/vX.Y.Z.md` ; les versions publiées disposent de leurs binaires dans GitHub Releases.
 
 ## [Unreleased]
 
 Aucun changement non publié.
+
+## [0.1.1] - 2026-09-08
+
+### Corrigé
+
+- Fins de ligne CSS cohérentes sur les nouveaux checkouts Windows.
+- Publication de tous les fichiers couverts par les empreintes SHA-256.
+- Première préversion distribuée ; v0.1.0 avait échoué en CI avant publication.
 
 ## [0.1.0] - 2026-09-08
 
@@ -27,5 +35,6 @@ Aucun changement non publié.
 - Tarifs suisses uniquement, hors options et surcoûts de traitement ; pesée finale nécessaire.
 - Exécutables non signés par un certificat d’éditeur.
 
-[Unreleased]: https://github.com/Thomas-TP/BoxMaker/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Thomas-TP/BoxMaker/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.1.1
 [0.1.0]: https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.1.0

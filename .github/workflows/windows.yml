@@ -101,8 +101,9 @@ jobs:
           if ($existing) { $arguments += '--merge' }
           dotnet tool run vpk -- @arguments
           if ($LASTEXITCODE -ne 0) { throw 'Velopack upload failed.' }
-          gh release upload $env:RELEASE_TAG artifacts/releases/SHA256SUMS.txt --clobber
-          if ($LASTEXITCODE -ne 0) { throw 'Checksum upload failed.' }
+          $assets = @(Get-ChildItem -LiteralPath artifacts/releases -File | ForEach-Object { $_.FullName })
+          gh release upload $env:RELEASE_TAG @assets --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Release assets upload failed.' }
           $edit = @('release', 'edit', $env:RELEASE_TAG, '--draft=false', '--notes-file', "docs/releases/$env:RELEASE_TAG.md")
           if ($preview) { $edit += @('--prerelease', '--latest=false') }
           gh @edit
