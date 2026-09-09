@@ -1,24 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import type { Design, Params } from "./types";
+import type { Design } from "./types";
 
 interface Props {
   design: Design | null;
-  params: Params;
   mode: "assembled" | "exploded" | "print" | "open";
   opening: number;
   showObject: boolean;
   reset: number;
 }
-export function Viewer({
-  design,
-  params,
-  mode,
-  showObject,
-  reset,
-  opening,
-}: Props) {
+export function Viewer({ design, mode, showObject, reset, opening }: Props) {
   const mount = useRef<HTMLElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const viewRef = useRef<{
@@ -96,21 +88,21 @@ export function Viewer({
               mechanism.tongueHalfWidth + 0.001 &&
             y > mechanism.tongueRoot
           ) {
-            const ratio = Math.min(
-              1.5,
+            const profile = mechanism.deflectionProfile;
+            const position = Math.min(
+              profile.length - 1,
               Math.max(
                 0,
-                (y - mechanism.tongueRoot) /
-                  (mechanism.hookY - mechanism.tongueRoot),
+                ((y - mechanism.tongueRoot) / profile[profile.length - 1][0]) *
+                  (profile.length - 1),
               ),
             );
+            const index = Math.min(profile.length - 2, Math.floor(position));
             v[2] -=
-              (pressed *
-                mechanism.releaseTravel *
-                ratio *
-                ratio *
-                (3 - ratio)) /
-              2;
+              pressed *
+              (profile[index][1] +
+                (position - index) *
+                  (profile[index + 1][1] - profile[index][1]));
           }
         }
       }
@@ -166,7 +158,7 @@ export function Viewer({
       objects.push(edges);
     }
     if (showObject && mode !== "print") {
-      const geometry = new THREE.BoxGeometry(...params.object);
+      const geometry = new THREE.BoxGeometry(...design.orientedObject);
       const material = new THREE.MeshStandardMaterial({
         color: 0xd1aa7c,
         transparent: true,
@@ -176,11 +168,9 @@ export function Viewer({
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.set(
-        ...(design.objectOffset.map((v, i) => v + params.object[i] / 2) as [
-          number,
-          number,
-          number,
-        ]),
+        ...(design.objectOffset.map(
+          (v, i) => v + design.orientedObject[i] / 2,
+        ) as [number, number, number]),
       );
       model.add(mesh);
       objects.push(mesh);
@@ -285,7 +275,7 @@ export function Viewer({
       }
       sun.shadow.dispose();
     };
-  }, [design, params.object, mode, showObject, reset, opening]);
+  }, [design, mode, showObject, reset, opening]);
   return (
     <section
       className="three-view"

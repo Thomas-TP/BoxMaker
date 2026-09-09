@@ -4,22 +4,29 @@ async (page) => {
   const assert = (ok, text) => { if (!ok) throw new Error(text); };
   await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
   await waitReady();
+  for (const dims of [[100,70,30],[100,30,70],[70,100,30],[70,30,100],[30,100,70],[30,70,100]]) {
+    for (let i=0;i<3;i++) await page.getByRole('spinbutton',{name:`Dimension ${'ABC'[i]} mm`,exact:true}).fill(String(dims[i]));
+    await page.waitForFunction(() => !document.querySelector('.metrics.muted'));
+    await page.locator('.orientation-note').getByText('70 × 100 × 30 mm', {exact:false}).waitFor();
+    assert((await page.locator('.fit-summary-heading').innerText()).includes('70,6 × 100,6 × 30,6'), 'Useful cavity must be invariant to dimension order');
+  }
+  await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
   await page.getByRole('combobox',{name:'Pièce',exact:true}).selectOption('body');
   await page.getByRole('combobox',{name:'Format',exact:true}).selectOption('3mf');
-  await page.getByRole('spinbutton',{name:'Largeur mm',exact:true}).fill('232');
+  await page.getByRole('spinbutton',{name:'Dimension A mm',exact:true}).fill('251');
   await page.getByText('Vérifiez les dimensions des pièces',{exact:true}).waitFor();
   await waitReady();
   assert(await page.getByRole('button',{name:'Exporter la boîte',exact:true}).isDisabled(),'Oversized P1S export should be blocked');
   await page.getByRole('button',{name:'Creality K2 260 × 260 × 260 mm',exact:true}).click();
   await page.getByText('Chaque pièce tient sur le plateau utile',{exact:true}).waitFor();
   await waitReady();
-  assert(await page.getByRole('button',{name:'Exporter la boîte',exact:true}).isEnabled(),'K2 should accept the 246.8 mm body');
+  assert(await page.getByRole('button',{name:'Exporter la boîte',exact:true}).isEnabled(),'K2 should accept the automatically oriented body');
   await page.getByRole('spinbutton',{name:'Poids de l’objet g',exact:true}).fill('');
   await page.getByText('Ajoutez le poids',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
-  await page.getByRole('spinbutton',{name:'Largeur mm',exact:true}).fill('150');
-  await page.getByRole('spinbutton',{name:'Longueur mm',exact:true}).fill('100');
-  await page.getByRole('spinbutton',{name:'Hauteur mm',exact:true}).fill('10');
+  await page.getByRole('spinbutton',{name:'Dimension A mm',exact:true}).fill('150');
+  await page.getByRole('spinbutton',{name:'Dimension B mm',exact:true}).fill('100');
+  await page.getByRole('spinbutton',{name:'Dimension C mm',exact:true}).fill('10');
   await page.getByRole('spinbutton',{name:'Calage par face mm',exact:true}).fill('0');
   await waitReady();
   await page.getByText('J’ai pesé mon envoi fermé',{exact:true}).click();
@@ -38,8 +45,8 @@ async (page) => {
   await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
   await page.locator('input[type=file]').setInputFiles('output/playwright/project.json');
   await page.getByText('Projet chargé.',{exact:true}).waitFor();
-  assert(await page.getByRole('spinbutton',{name:'Largeur mm',exact:true}).inputValue() === '150','Project dimensions must round-trip');
-  await page.getByRole('spinbutton',{name:'Largeur mm',exact:true}).fill('151');
+  assert(await page.getByRole('spinbutton',{name:'Dimension A mm',exact:true}).inputValue() === '150','Project dimensions must round-trip');
+  await page.getByRole('spinbutton',{name:'Dimension A mm',exact:true}).fill('151');
   await waitReady();
   assert(await page.getByRole('spinbutton',{name:'Poids total réel, boîte et calage inclus g',exact:true}).inputValue() === '', 'Geometry changes must invalidate a measured weight');
   await page.getByRole('button',{name:'Fermée',exact:true}).click();
@@ -60,6 +67,12 @@ async (page) => {
     await page.getByRole('button',{name:'Exporter le couvercle',exact:true}).click();
     await (await download).saveAs(`output/playwright/lid.${format}`);
   }
+  await page.locator('input[type=file]').setInputFiles('scripts/fixtures/press-slide-v2.boxmaker.json');
+  await page.getByText('Projet adapté à la nouvelle fermeture et orienté automatiquement. Repesez l’envoi.',{exact:true}).waitFor();
+  await waitReady();
+  assert(await page.getByRole('spinbutton',{name:'Calage par face mm',exact:true}).inputValue() === '5', 'Explicit padding must survive migration');
+  assert(await page.getByRole('spinbutton',{name:'Jeu autour de l’objet mm',exact:true}).inputValue() === '0.3', 'Old projects get insertion clearance');
+  assert(await page.getByRole('spinbutton',{name:'Poids total réel, boîte et calage inclus g',exact:true}).inputValue() === '', 'Migrated geometry invalidates weight');
   await page.locator('input[type=file]').setInputFiles('scripts/fixtures/legacy.boxmaker.json');
   await page.getByText('Projet chargé.',{exact:true}).waitFor();
   await waitReady();

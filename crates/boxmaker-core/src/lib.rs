@@ -2,6 +2,7 @@ mod export;
 mod mesh;
 mod postal;
 mod press_slide;
+mod spring;
 
 pub use mesh::Mesh;
 pub use postal::{Quote, quotes};
@@ -15,6 +16,8 @@ pub struct Params {
     pub object: [f64; 3],
     pub object_weight: Option<f64>,
     pub padding: f64,
+    #[serde(default = "default_object_clearance")]
+    pub object_clearance: f64,
     pub padding_weight: f64,
     pub wall: f64,
     pub floor: f64,
@@ -29,6 +32,9 @@ pub struct Params {
 fn legacy_model() -> String {
     "legacy".into()
 }
+fn default_object_clearance() -> f64 {
+    0.3
+}
 
 impl Default for Params {
     fn default() -> Self {
@@ -36,8 +42,9 @@ impl Default for Params {
             model: "press-slide".into(),
             object: [100., 70., 30.],
             object_weight: Some(80.),
-            padding: 5.,
-            padding_weight: 5.,
+            padding: 0.,
+            object_clearance: default_object_clearance(),
+            padding_weight: 0.,
             wall: 1.2,
             floor: 0.8,
             clearance: 0.3,
@@ -71,6 +78,9 @@ pub struct Design {
     pub outer: [f64; 3],
     pub inner: [f64; 3],
     pub object_offset: [f64; 3],
+    pub oriented_object: [f64; 3],
+    pub object_space: [f64; 3],
+    pub mechanism_expansion: [f64; 3],
     pub parts: Vec<Part>,
     pub plastic_weight: f64,
     pub total_weight: Option<f64>,
@@ -89,11 +99,62 @@ fn range(value: f64, min: f64, max: f64, label: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn orient(p: &Params, plate: [f64; 3]) -> [f64; 3] {
+    let mut sorted = p.object;
+    sorted.sort_by(f64::total_cmp);
+    let permutations = [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ];
+    let score = |object| {
+        let candidate = Params {
+            object,
+            ..p.clone()
+        };
+        let outer = press_slide::layout(&candidate).outer;
+        let ratios = [
+            (outer[0] + 2. * p.plate_margin) / plate[0],
+            (outer[1] + 2. * p.plate_margin) / plate[1],
+            outer[2] / plate[2],
+        ];
+        let excess = ratios.into_iter().fold(1., f64::max) - 1.;
+        // Fit first; lowest height next. Prefer sliding along the longest
+        // in-plane dimension when both directions fit. Values, never input
+        // indices, break ties so all six input orders give the same geometry.
+        [
+            excess,
+            outer[2],
+            if object[1] >= object[0] { 0. } else { 1. },
+            outer.iter().product(),
+            object[0],
+            object[1],
+        ]
+    };
+    permutations
+        .map(|indices| indices.map(|i| sorted[i]))
+        .into_iter()
+        .min_by(|a, b| {
+            let sa = score(*a);
+            let sb = score(*b);
+            sa.into_iter()
+                .zip(sb)
+                .map(|(x, y)| x.total_cmp(&y))
+                .find(|o| !o.is_eq())
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .unwrap()
+}
+
 pub fn calculate(p: &Params) -> Result<Design, String> {
     for v in p.object {
         range(v, 10., 2500., "Dimension de l’objet (mm)")?;
     }
     range(p.padding, 0., 100., "Calage par face (mm)")?;
+    range(p.object_clearance, 0.1, 2., "Jeu autour de l’objet (mm)")?;
     range(p.wall, 1.2, 5., "Paroi (mm)")?;
     if p.model != "press-slide" && p.model != "legacy" {
         return Err("Modèle de boîte inconnu".into());
@@ -119,6 +180,15 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
         "k2" => [260.; 3],
         _ => return Err("Imprimante inconnue".into()),
     };
+    let effective = Params {
+        object: if p.model == "press-slide" {
+            orient(p, volume)
+        } else {
+            p.object
+        },
+        ..p.clone()
+    };
+    let p = &effective;
     let (inner, outer, object_offset, raw_parts, mechanism) = if p.model == "press-slide" {
         let (inner, outer, offset, parts, mechanism) = press_slide::design(p)?;
         (inner, outer, offset, parts, Some(mechanism))
@@ -198,11 +268,12 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
     if p.model == "press-slide" {
         warnings.push("Fermeture à pression : imprimez d’abord l’essai, vérifiez le clic et l’ouverture sans forcer. La durée de vie du ressort PLA et la résistance au transport restent à tester ; scellez l’envoi avec un adhésif.".into());
         warnings.push("Boîte : fond posé au plateau. Couvercle : face lisse dessous, nervures et bouton dessus. Contrôlez le petit pont du verrou et les lèvres des rails dans le slicer.".into());
-        if inner[0] > p.object[0] + 2. * p.padding + 0.01
-            || inner[1] > p.object[1] + 2. * p.padding + 0.01
+        if inner[0] > p.object[0] + 2. * (p.padding + p.object_clearance) + 0.01
+            || inner[1] > p.object[1] + 2. * (p.padding + p.object_clearance) + 0.01
         {
-            warnings.push("Cavité portée à au moins 30 × 40 mm pour conserver la longueur du ressort, même avec un petit objet.".into());
+            warnings.push("Petit objet : la cavité est agrandie uniquement selon l’espace nécessaire à la languette calculée. Le supplément est détaillé sous l’aperçu.".into());
         }
+        warnings.push("Effort de pression estimé avec un modèle de poutre et une plage de rigidité du PLA. Filament, couches, température et flexion de l’ancrage peuvent modifier le résultat ; validez sur un essai imprimé.".into());
     } else {
         warnings.push("Ancien modèle à clavette : prototype PLA à tester. Sécurisez la fermeture avec de l’adhésif.".into());
     }
@@ -213,6 +284,19 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
         outer,
         inner,
         object_offset,
+        oriented_object: p.object,
+        object_space: std::array::from_fn(|i| inner[i] - p.object[i]),
+        mechanism_expansion: std::array::from_fn(|i| {
+            (inner[i]
+                - p.object[i]
+                - 2. * (p.padding
+                    + if p.model == "press-slide" {
+                        p.object_clearance
+                    } else {
+                        0.
+                    }))
+            .max(0.)
+        }),
         material_cost: plastic_weight / 1000. * p.filament_price,
         plastic_weight,
         total_weight,
@@ -265,6 +349,89 @@ pub fn dispatch(input: &str) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn all_input_orders_generate_the_same_oriented_geometry() {
+        for object in [
+            [100., 70., 30.],
+            [10., 15., 20.],
+            [248., 20., 20.],
+            [240., 70., 30.],
+        ] {
+            let expected = calculate(&Params {
+                object,
+                ..Default::default()
+            })
+            .unwrap();
+            for indices in [
+                [0, 1, 2],
+                [0, 2, 1],
+                [1, 0, 2],
+                [1, 2, 0],
+                [2, 0, 1],
+                [2, 1, 0],
+            ] {
+                let actual = calculate(&Params {
+                    object: indices.map(|i| object[i]),
+                    ..Default::default()
+                })
+                .unwrap();
+                assert_eq!(actual.oriented_object, expected.oriented_object);
+                assert_eq!(actual.inner, expected.inner);
+                assert_eq!(actual.outer, expected.outer);
+                for (a, b) in actual.parts.iter().zip(&expected.parts) {
+                    assert_eq!(a.mesh.vertices, b.mesh.vertices);
+                    assert_eq!(a.mesh.triangles, b.mesh.triangles);
+                }
+            }
+        }
+    }
+    #[test]
+    fn orientation_uses_height_or_swaps_slide_axis_to_fit_printer() {
+        let tall = calculate(&Params {
+            object: [248., 20., 20.],
+            ..Default::default()
+        })
+        .unwrap();
+        assert_eq!(tall.oriented_object, [20., 20., 248.]);
+        assert!(tall.parts.iter().all(|p| p.fits));
+        let wide = calculate(&Params {
+            object: [240., 70., 30.],
+            ..Default::default()
+        })
+        .unwrap();
+        assert_eq!(wide.oriented_object, [240., 70., 30.]);
+        assert!(wide.parts.iter().all(|p| p.fits));
+        let impossible = calculate(&Params {
+            object: [260.; 3],
+            ..Default::default()
+        })
+        .unwrap();
+        assert!(impossible.parts.iter().any(|p| !p.fits));
+    }
+    #[test]
+    fn snug_space_contains_only_explicit_clearance_without_hidden_minimum() {
+        let d = calculate(&Params::default()).unwrap();
+        assert_eq!(d.oriented_object, [70., 100., 30.]);
+        for i in 0..3 {
+            assert!((d.inner[i] - d.oriented_object[i] - 0.6).abs() < 1e-8);
+            assert!(d.mechanism_expansion[i] < 1e-8);
+        }
+        let p = calculate(&Params {
+            padding: 2.,
+            ..Default::default()
+        })
+        .unwrap();
+        for i in 0..3 {
+            assert!((p.inner[i] - p.oriented_object[i] - 4.6).abs() < 1e-8);
+        }
+        let tiny = calculate(&Params {
+            object: [10.; 3],
+            ..Default::default()
+        })
+        .unwrap();
+        assert!(tiny.inner[0] < 30. && tiny.inner[1] < 40.);
+        assert!(tiny.mechanism_expansion.iter().any(|v| *v > 0.));
+    }
     #[test]
     fn refuses_invalid_inputs() {
         for invalid in [f64::NAN, f64::INFINITY, -1., 0., 5000.] {

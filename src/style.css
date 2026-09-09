@@ -1411,3 +1411,46 @@ footer {
   line-height: 1.5;
   color: var(--muted);
 }
+.orientation-note {
+  margin: 14px 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.orientation-note strong,
+.orientation-note :where(span) {
+  display: block;
+}
+.orientation-note strong {
+  color: #355c42;
+}
+.object-fit {
+  margin-top: 14px;
+}
+.fit-summary {
+  padding: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.fit-summary-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 16px;
+  justify-content: space-between;
+}
+.fit-summary-heading > :where(span) {
+  color: var(--muted);
+}
+.fit-summary p {
+  margin: 9px 0;
+}
+.spring-details {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.spring-details summary {
+  cursor: pointer;
+  color: #355c42;
+  font-weight: 600;
+}

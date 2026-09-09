@@ -3,6 +3,7 @@ export interface Params {
   object: [number, number, number];
   objectWeight: number | null;
   padding: number;
+  objectClearance: number;
   paddingWeight: number;
   wall: number;
   floor: number;
@@ -42,10 +43,23 @@ export interface Design {
     beamThickness: number;
     engagement: number;
     lidZ: number;
+    beamLength: number;
+    tipThickness: number;
+    pressY: number;
+    estimatedForce: number;
+    forceRange: [number, number];
+    strainPercent: number;
+    stopStrainPercent: number;
+    headroom: number;
+    rearAllowance: number;
+    deflectionProfile: [number, number][];
   } | null;
   outer: number[];
   inner: number[];
   objectOffset: number[];
+  orientedObject: number[];
+  objectSpace: number[];
+  mechanismExpansion: number[];
   parts: Part[];
   plasticWeight: number;
   totalWeight: number | null;
@@ -60,8 +74,9 @@ export const defaults: Params = {
   model: "press-slide",
   object: [100, 70, 30],
   objectWeight: 80,
-  padding: 5,
-  paddingWeight: 5,
+  padding: 0,
+  objectClearance: 0.3,
+  paddingWeight: 0,
   wall: 1.2,
   floor: 0.8,
   clearance: 0.3,

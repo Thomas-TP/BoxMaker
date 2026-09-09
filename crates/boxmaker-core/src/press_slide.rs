@@ -1,7 +1,7 @@
 //! Two-piece sliding enclosure: load-bearing rails and a low-travel, unloaded
 //! cantilever catch. All dimensions are millimetres; this is a printable
 //! prototype, not a fatigue or shipping-strength certification.
-use crate::{Mesh, Params, mesh::RawPart};
+use crate::{Mesh, Params, mesh::RawPart, spring};
 use manifold_csg::{CrossSection, JoinType, Manifold};
 use serde::Serialize;
 
@@ -9,10 +9,6 @@ const RIB: f64 = 1.2;
 const RIB_WIDTH: f64 = 1.2;
 const LID: f64 = 1.2;
 const ENGAGEMENT: f64 = 0.65;
-const RELEASE: f64 = 0.85;
-const STOP: f64 = 1.6;
-const HALF_TONGUE: f64 = 6.;
-const BEAM_LENGTH: f64 = 31.;
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -25,6 +21,63 @@ pub struct Mechanism {
     pub beam_thickness: f64,
     pub engagement: f64,
     pub lid_z: f64,
+    pub beam_length: f64,
+    pub tip_thickness: f64,
+    pub press_y: f64,
+    pub estimated_force: f64,
+    pub force_range: [f64; 2],
+    pub strain_percent: f64,
+    pub stop_strain_percent: f64,
+    pub headroom: f64,
+    pub rear_allowance: f64,
+    pub deflection_profile: Vec<[f64; 2]>,
+}
+impl Mechanism {
+    pub fn deflection_at(&self, distance: f64) -> f64 {
+        let points = &self.deflection_profile;
+        let position = (distance / points.last().unwrap()[0] * (points.len() - 1) as f64)
+            .clamp(0., (points.len() - 1) as f64);
+        let index = (position.floor() as usize).min(points.len() - 2);
+        points[index][1] + (position - index as f64) * (points[index + 1][1] - points[index][1])
+    }
+}
+
+pub(crate) struct Layout {
+    pub spring: spring::Spring,
+    pub inner: [f64; 3],
+    pub outer: [f64; 3],
+    pub lid_z: f64,
+    pub headroom: f64,
+    pub stop: f64,
+    pub rear: f64,
+    pub bridge_bottom: f64,
+}
+
+pub(crate) fn layout(p: &Params) -> Layout {
+    let requested = p.object.map(|v| v + 2. * (p.padding + p.object_clearance));
+    let (spring, inner) = spring::choose(requested, p.clearance);
+    let rear = spring::BRIDGE + 2.5 + 2. * p.clearance + 0.3;
+    let headroom = spring.deflection(spring.length + 2.8) + 0.15;
+    let stop = headroom;
+    let lid_z = p.floor + RIB + inner[2] + headroom;
+    let bridge_bottom =
+        lid_z + spring.thickness(spring.length - spring::BRIDGE - p.clearance) + p.clearance;
+    let h =
+        ((bridge_bottom + 1.2).max(lid_z + spring.root_thickness + 0.5) * 10_000.).ceil() / 10_000.;
+    Layout {
+        inner,
+        outer: [
+            inner[0] + 2. * (p.wall + RIB),
+            inner[1] + 2. * p.wall + RIB + rear,
+            h,
+        ],
+        spring,
+        lid_z,
+        headroom,
+        stop,
+        rear,
+        bridge_bottom,
+    }
 }
 
 pub(crate) struct Assembly {
@@ -77,25 +130,25 @@ fn printable(solid: &Manifold) -> Result<Manifold, String> {
 }
 
 pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
-    let mut inner = p.object.map(|v| v + 2. * p.padding);
-    // Do not shorten the compliant beam for small objects. Its length is a
-    // mechanical dimension, not a scale factor attached to the contents.
-    inner[0] = inner[0].max(30.);
-    inner[1] = inner[1].max(40.);
+    let layout = layout(p);
+    let inner = layout.inner;
+    let spring = &layout.spring;
     let t = p.wall;
     let g = p.clearance;
     let front = t + RIB;
-    let w = inner[0] + 2. * (t + RIB);
-    let d = inner[1] + front + t + 6.;
-    let lid_z = p.floor + RIB + inner[2] + STOP;
+    let [w, d, h] = layout.outer;
+    let lid_z = layout.lid_z;
     let roof_z = lid_z + LID + g;
-    let h = roof_z + 1.2;
-    let cx = w / 2.;
     let slot_width = 0.8 + 2. * g;
-    let bridge_start = d - t - 6.;
-    let bridge_end = d - t - 4.;
-    let root = bridge_start - BEAM_LENGTH;
+    let half_tongue = spring.width / 2.;
+    // Keep the root beside a rail rather than on the flexible middle of a
+    // large panel. Its reinforced connection has a bounded lateral span.
+    let cx = t + RIB + g + slot_width + half_tongue + 0.8;
+    let bridge_start = d - t - layout.rear;
+    let bridge_end = bridge_start + spring::BRIDGE;
     let hook_y = bridge_end + g;
+    let root = hook_y - spring.length;
+    let stop = layout.stop;
     let outer = rounded_rect(0., 0., w, d, t + RIB);
     let cavity = rounded_rect(t, t, w - 2. * t, d - 2. * t, RIB);
     let shell = &outer.extrude(h) - &cavity.extrude(h + 2.).translate(0., 0., p.floor);
@@ -150,28 +203,28 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
     // Two slender pillars pass through the open slots of the lid. A short
     // bridge across them is the fixed striker. No deep solid central boss.
     for side in [-1., 1.] {
-        let x = cx + side * (HALF_TONGUE + slot_width / 2.);
+        let x = cx + side * (half_tongue + slot_width / 2.);
         adds.push(cuboid([x - 0.4, bridge_start, 0.], [x + 0.4, d, h]));
     }
     adds.push(cuboid(
         [
-            cx - HALF_TONGUE - slot_width / 2. - 0.4,
+            cx - half_tongue - slot_width / 2. - 0.4,
             bridge_start,
-            roof_z,
+            layout.bridge_bottom,
         ],
-        [cx + HALF_TONGUE + slot_width / 2. + 0.4, bridge_end, h],
+        [cx + half_tongue + slot_width / 2. + 0.4, bridge_end, h],
     ));
     let stop_profile = CrossSection::from_polygons(&[vec![
-        [bridge_start, lid_z - STOP - 1.],
-        [d, lid_z - STOP - 1. - (d - bridge_start)],
-        [d, lid_z - STOP],
-        [bridge_start, lid_z - STOP],
+        [bridge_start, lid_z - stop - 1.],
+        [d, lid_z - stop - 1. - (d - bridge_start)],
+        [d, lid_z - stop],
+        [bridge_start, lid_z - stop],
     ]]);
     adds.push(
         stop_profile
-            .extrude(12.)
+            .extrude(spring.width)
             .rotate(90., 0., 90.)
-            .translate(cx - 6., 0., 0.),
+            .translate(cx - half_tongue, 0., 0.),
     );
     let mut body = Manifold::batch_union(&adds).intersection(&outer.extrude(h));
     let cuts = vec![
@@ -179,8 +232,8 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
         cuboid([-1., -1., lid_z - g], [w + 1., t + RIB + 0.1, h + 1.]),
         // Tongue travel pocket. Its floor is also an over-travel stop.
         cuboid(
-            [cx - HALF_TONGUE - g, bridge_start - 0.01, lid_z - STOP],
-            [cx + HALF_TONGUE + g, d + 1., roof_z],
+            [cx - half_tongue - g, bridge_start - 0.01, lid_z - stop],
+            [cx + half_tongue + g, d + 1., layout.bridge_bottom],
         ),
     ];
     body = &body - &Manifold::batch_union(&cuts);
@@ -193,7 +246,7 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
     let mut lid = outline.extrude(LID).translate(0., 0., lid_z);
     let mut slots = vec![];
     for side in [-1., 1.] {
-        let x = cx + side * (HALF_TONGUE + slot_width / 2.);
+        let x = cx + side * (half_tongue + slot_width / 2.);
         let slot = rounded_rect(
             x - slot_width / 2.,
             root,
@@ -206,7 +259,7 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
     lid = &lid - &Manifold::batch_union(&slots);
     // The leading ramp pushes the long tongue down on closing. The vertical
     // front shoulder catches behind the bridge, without sustained deflection.
-    let tooth_height = g + ENGAGEMENT;
+    let tooth_height = layout.bridge_bottom - lid_z - spring.tip_thickness + ENGAGEMENT;
     let tooth_profile = CrossSection::from_polygons(&[vec![
         [hook_y, 0.],
         [hook_y + 2.5, 0.],
@@ -214,16 +267,35 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
         [hook_y, tooth_height],
     ]]);
     let tooth = tooth_profile
-        .extrude(9.)
+        .extrude(spring.width - 2.)
         .rotate(90., 0., 90.)
-        .translate(cx - 4.5, 0., lid_z + LID);
-    let mut lid_adds = vec![lid, tooth];
+        .translate(cx - half_tongue + 1., 0., lid_z + spring.tip_thickness);
+    let beam = CrossSection::from_polygons(&[vec![
+        [root - 3., 0.],
+        [lid_y + lid_d, 0.],
+        [lid_y + lid_d, spring.tip_thickness],
+        [hook_y, spring.tip_thickness],
+        [root, spring.root_thickness],
+        [root - 3., spring.root_thickness],
+    ]])
+    .extrude(spring.width)
+    .rotate(90., 0., 90.)
+    .translate(cx - half_tongue, 0., lid_z);
+    let root_support = cuboid(
+        [t + RIB + g + 0.05, root - 3., lid_z],
+        [
+            cx + half_tongue + slot_width + 0.8,
+            root,
+            lid_z + spring.root_thickness + 0.4,
+        ],
+    );
+    let mut lid_adds = vec![lid, tooth, beam, root_support];
     // Raised finger texture identifies the press area, protected below the rim.
-    for y in [hook_y - 6., hook_y - 8., hook_y - 10.] {
+    for y in [hook_y - 3.7, hook_y - 4.7, hook_y - 5.7] {
         lid_adds.push(
-            rounded_rect(cx - 4.5, y, 9., 0.8, 0.35)
-                .extrude(0.25)
-                .translate(0., 0., lid_z + LID),
+            rounded_rect(cx - half_tongue + 1., y, spring.width - 2., 0.6, 0.25)
+                .extrude(0.25 + spring.thickness(y - root) - spring.tip_thickness)
+                .translate(0., 0., lid_z + spring.tip_thickness),
         );
     }
     // Low top ribs print upwards from a flat underside. Keep the compliant
@@ -233,8 +305,8 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
         [w - t - RIB - g - 0.4, d - t - g - 1., lid_z + LID + 0.8],
     );
     let flex_bay = cuboid(
-        [cx - HALF_TONGUE - slot_width - 1.5, root - 2., lid_z],
-        [cx + HALF_TONGUE + slot_width + 1.5, d + 1., h + 1.],
+        [cx - half_tongue - slot_width - 1.5, root - 3.2, lid_z],
+        [cx + half_tongue + slot_width + 1.5, d + 1., h + 1.],
     );
     let mut top_ribs = vec![];
     for x in ribs_between(lid_x, lid_x + lid_w) {
@@ -269,19 +341,38 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
         inner,
         outer: [w, d, h],
         object_offset: [
-            t + RIB + p.padding,
-            front + p.padding,
-            p.floor + RIB + p.padding,
+            t + RIB + (inner[0] - p.object[0]) / 2.,
+            front + (inner[1] - p.object[1]) / 2.,
+            p.floor + RIB + p.padding + p.object_clearance,
         ],
         mechanism: Mechanism {
             tongue_center: cx,
-            tongue_half_width: HALF_TONGUE,
+            tongue_half_width: half_tongue,
             tongue_root: root,
             hook_y,
-            release_travel: RELEASE,
-            beam_thickness: LID,
+            release_travel: spring::RELEASE,
+            beam_thickness: spring.root_thickness,
             engagement: ENGAGEMENT,
             lid_z,
+            beam_length: spring.length,
+            tip_thickness: spring.tip_thickness,
+            press_y: hook_y - spring::FINGER_OFFSET,
+            estimated_force: spring.force,
+            force_range: [
+                spring.force * 2000. / spring::MODULUS,
+                spring.force * 3500. / spring::MODULUS,
+            ],
+            strain_percent: spring.strain * 100.,
+            stop_strain_percent: spring.strain * 100. * stop
+                / spring.deflection(spring.length - spring::BRIDGE - g),
+            headroom: layout.headroom,
+            rear_allowance: layout.rear,
+            deflection_profile: (0..=128)
+                .map(|i| {
+                    let y = (spring.length + 3.) * i as f64 / 128.;
+                    [y, spring.deflection(y)]
+                })
+                .collect(),
         },
         body,
         lid,
@@ -353,8 +444,7 @@ mod tests {
             let mut p = [x, y, z];
             if (p[0] - m.tongue_center).abs() <= m.tongue_half_width + 0.001 && p[1] > m.tongue_root
             {
-                let ratio = ((p[1] - m.tongue_root) / (m.hook_y - m.tongue_root)).clamp(0., 1.5);
-                p[2] -= m.release_travel * ratio * ratio * (3. - ratio) / 2.;
+                p[2] -= m.deflection_at(p[1] - m.tongue_root);
             }
             p
         })
@@ -396,7 +486,11 @@ mod tests {
             for s in [&a.body, &a.lid] {
                 for v in mesh(s).vertices {
                     for (i, value) in v.iter().enumerate() {
-                        assert!(*value >= -1e-6 && *value <= a.outer[i] + 1e-6);
+                        assert!(
+                            *value >= -1e-6 && *value <= a.outer[i] + 1e-6,
+                            "outside: {v:?}, outer {:?}, params {p:?}",
+                            a.outer
+                        );
                     }
                 }
             }
@@ -405,38 +499,60 @@ mod tests {
 
     #[test]
     fn latch_blocks_sliding_but_releases_when_pressed() {
-        for gap in [0.15, 0.3, 0.6] {
-            let a = assembly(&Params {
-                clearance: gap,
-                ..Default::default()
-            })
-            .unwrap();
-            assert!(
-                a.body
-                    .intersection(&a.lid.translate(0., -gap - 0.4, 0.))
-                    .volume()
-                    > 0.05,
-                "shoulder must block the closed lid"
-            );
-            let open = pressed(&a);
-            for displacement in [0., 0.5, 1., 2., 4., 6., 8.] {
-                let intersection = a
-                    .body
-                    .intersection(&open.translate(0., -displacement, 0.))
-                    .volume();
-                assert!(
-                    intersection < 1e-5,
-                    "pressed lid collides at travel {displacement}, gap {gap}: {intersection} mm³"
-                );
-            }
-            for displacement in [6., 8., 10., 20., 40., 70., 95.] {
+        for object in [
+            [10.; 3],
+            [30., 40., 10.],
+            [100., 70., 30.],
+            [220., 210., 200.],
+        ] {
+            for gap in [0.15, 0.3, 0.6] {
+                let a = assembly(&Params {
+                    object,
+                    clearance: gap,
+                    ..Default::default()
+                })
+                .unwrap();
                 assert!(
                     a.body
-                        .intersection(&a.lid.translate(0., -displacement, 0.))
+                        .intersection(&a.lid.translate(0., -gap - 0.4, 0.))
                         .volume()
-                        < 1e-5,
-                    "released lid must slide freely after disengagement"
+                        > 0.05,
+                    "shoulder must block the closed lid"
                 );
+                let open = pressed(&a);
+                let free = cuboid(
+                    a.object_offset,
+                    std::array::from_fn(|i| a.object_offset[i] + object[i]),
+                );
+                for displacement in [0., 0.5, 1., 2., 4., 6., 8.] {
+                    let intersection = a
+                        .body
+                        .intersection(&open.translate(0., -displacement, 0.))
+                        .volume();
+                    assert!(
+                        open.translate(0., -displacement, 0.)
+                            .intersection(&free)
+                            .volume()
+                            < 1e-5,
+                        "pressed lid touches the object"
+                    );
+                    assert!(
+                        intersection < 1e-5,
+                        "pressed lid collides at travel {displacement}, gap {gap}: {intersection} mm³, bounds {:?}",
+                        a.body
+                            .intersection(&open.translate(0., -displacement, 0.))
+                            .bounding_box()
+                    );
+                }
+                for displacement in [6., 8., 10., 20., 40., 70., 95.] {
+                    assert!(
+                        a.body
+                            .intersection(&a.lid.translate(0., -displacement, 0.))
+                            .volume()
+                            < 1e-5,
+                        "released lid must slide freely after disengagement"
+                    );
+                }
             }
         }
     }

@@ -1,6 +1,6 @@
 # Boxmaker · Swiss3Design
 
-Application Windows locale pour concevoir une boîte d’expédition imprimée en PLA, visualiser ses deux pièces et comparer les tarifs de la Poste suisse. La fermeture coulissante à pression remplace la clavette séparée ; les anciens projets conservent leur géométrie.
+Application Windows locale pour concevoir une boîte d’expédition imprimée en PLA, visualiser ses deux pièces et comparer les tarifs de la Poste suisse. La fermeture coulissante à pression remplace la clavette séparée ; le modèle à clavette reste disponible.
 
 [Télécharger la préversion Windows](https://github.com/Thomas-TP/BoxMaker/releases) · [Notes de version](CHANGELOG.md) · [Compilation et releases](https://github.com/Thomas-TP/BoxMaker/actions)
 
@@ -8,7 +8,7 @@ Application Windows locale pour concevoir une boîte d’expédition imprimée e
 
 L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmaker-win-Setup.exe`. Un ZIP portable est également produit. Le binaire autonome est `target/release/boxmaker.exe` et nécessite le runtime Microsoft WebView2.
 
-1. Saisir les dimensions en **mm**, le poids de l’objet en **g**, et le calage par face.
+1. Saisir les trois dimensions en **mm**, dans n’importe quel ordre : le modèle coulissant choisit automatiquement une orientation imprimable et basse. Renseigner le poids en **g**. Le jeu d’insertion vaut 0,3 mm par face ; ajouter séparément le calage nécessaire.
 2. Choisir **Bambu Lab P1S (256³ mm)** ou **Creality K2 classique (260³ mm)**.
 3. Ajuster parois, fond et jeu dans les réglages avancés. Le profil est PLA ; le prix au kilo est modifiable.
 4. Inspecter les vues fermée, éclatée, pièces à plat et ouverture. Le curseur montre la pression sur la languette arrière puis le retrait du couvercle.
@@ -16,7 +16,7 @@ L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmak
 6. Dans Bambu Studio ou Creality Print, vérifier l’orientation, les surplombs, les zones exclues et le poids calculé. Imprimer une petite boîte d’essai avant un emballage complet.
 7. Emballer, sécuriser la fermeture avec un adhésif et peser l’envoi fermé. Saisir ce poids réel dans « J’ai pesé mon envoi fermé ».
 
-Les projets peuvent être enregistrés en `.boxmaker.json` puis rouverts. Modifier la géométrie ou le contenu efface le poids mesuré pour éviter un tarif calculé sur une ancienne pesée.
+Les projets peuvent être enregistrés en `.boxmaker.json` puis rouverts. Un projet coulissant v2 est adapté au mécanisme v0.3, conserve son calage et doit être repesé ; un projet à clavette conserve sa géométrie. Modifier la géométrie ou le contenu efface le poids mesuré pour éviter un tarif calculé sur une ancienne pesée.
 
 ## Développement
 
@@ -51,7 +51,7 @@ La nouvelle géométrie utilise Manifold via les bindings Rust `manifold-csg` po
 - `scripts/browser-smoke.js` est un parcours Playwright CLI pour vérifier les limites P1S/K2, les tarifs lettre, le poids absent, les téléchargements et la sauvegarde/réouverture d’un projet.
 - Le contrôle de plateau considère les pièces à plat avec rotation XY à 90° et une marge par bord. Les zones exclues spécifiques du slicer P1S ne sont pas modélisées. La vue « pièces à plat » n’est pas un placement automatique sur un plateau commun.
 - La masse est estimée avec une densité de 1,24 g/cm³ et le volume solide. Le slicer, la densité réelle du filament, l’infill et la pesée finale peuvent différer. Le coût matière exclut temps, énergie, calage et affranchissement.
-- **Prototype mécanique non homologué et non imprimé lors du développement.** Le jeu, la fatigue de la languette PLA, les rails et la protection du contenu doivent être testés physiquement. Le petit pont arrière et les lèvres des rails sont à examiner dans le slicer. Voir [le choix mécanique et le protocole d’essai](docs/MECHANISM.md).
+- **Prototype mécanique non homologué.** Cette révision n’a pas encore fait l’objet d’un essai physique. Le jeu, la fatigue de la languette PLA, les rails et la protection du contenu doivent être testés physiquement. Le petit pont arrière et les lèvres des rails sont à examiner dans le slicer. Voir [le choix mécanique et le protocole d’essai](docs/MECHANISM.md).
 - Tarifs pour les envois intérieurs en Suisse seulement, datés de 2026 ; détails dans [docs/POSTAL.md](docs/POSTAL.md).
 
 ## Velopack

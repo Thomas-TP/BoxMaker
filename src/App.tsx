@@ -104,6 +104,7 @@ export default function App() {
         "object",
         "objectWeight",
         "padding",
+        "objectClearance",
         "paddingWeight",
         "wall",
         "floor",
@@ -171,7 +172,7 @@ export default function App() {
   async function saveProject() {
     try {
       const saved = await download(
-        JSON.stringify({ version: 2, params }, null, 2),
+        JSON.stringify({ version: 3, params }, null, 2),
         "ma-boite.boxmaker.json",
         "application/json",
       );
@@ -187,17 +188,25 @@ export default function App() {
     try {
       if (file.size > 32768) throw new Error("Fichier trop volumineux");
       const project = JSON.parse(await file.text());
-      if (![1, 2].includes(project.version) || !project.params)
+      if (![1, 2, 3].includes(project.version) || !project.params)
         throw new Error("Projet Boxmaker incompatible");
       const loaded = {
         ...project.params,
+        objectClearance:
+          project.params.objectClearance ?? defaults.objectClearance,
         model: project.params.model ?? "legacy",
       };
+      const migrated = loaded.model === "press-slide" && project.version < 3;
+      if (migrated) loaded.measuredTotal = null;
       await engine<Design>("calculate", loaded);
       setParams(loaded);
       setMode("exploded");
       setOpening(0);
-      setNotice("Projet chargé.");
+      setNotice(
+        migrated
+          ? "Projet adapté à la nouvelle fermeture et orienté automatiquement. Repesez l’envoi."
+          : "Projet chargé.",
+      );
     } catch (e) {
       setNotice(`Ouverture impossible : ${String(e)}`);
     }
@@ -292,7 +301,10 @@ export default function App() {
               <h3>L’objet à protéger</h3>
             </div>
             <div className="field-grid three">
-              {["Largeur", "Longueur", "Hauteur"].map((label, i) => (
+              {(params.model === "press-slide"
+                ? ["Dimension A", "Dimension B", "Dimension C"]
+                : ["Largeur", "Longueur", "Hauteur"]
+              ).map((label, i) => (
                 <Field
                   key={label}
                   label={label}
@@ -323,19 +335,49 @@ export default function App() {
                 onChange={(v) => set("padding", v ?? 0)}
               />
             </div>
-            <button
-              type="button"
-              className="inline-action"
-              onClick={() =>
-                set("object", [
-                  params.object[1],
-                  params.object[2],
-                  params.object[0],
-                ])
-              }
-            >
-              <RotateCcw size={13} /> Changer l’orientation de l’objet
-            </button>
+            {params.model === "legacy" ? (
+              <button
+                type="button"
+                className="inline-action"
+                onClick={() =>
+                  set("object", [
+                    params.object[1],
+                    params.object[2],
+                    params.object[0],
+                  ])
+                }
+              >
+                <RotateCcw size={13} /> Changer l’orientation de l’objet
+              </button>
+            ) : (
+              <p className="orientation-note">
+                <strong>Orientation automatique</strong>
+                <span>
+                  {design
+                    ? `${dimensions(design.orientedObject)} mm`
+                    : "Calcul…"}{" "}
+                  · largeur × longueur × hauteur
+                </span>
+                Ordre de saisie libre. La boîte prend l’orientation la plus
+                basse qui tient sur l’imprimante.
+              </p>
+            )}
+            {params.model === "press-slide" && (
+              <div className="object-fit">
+                <Field
+                  label="Jeu autour de l’objet"
+                  value={params.objectClearance}
+                  min={0.1}
+                  max={2}
+                  step={0.1}
+                  onChange={(v) => set("objectClearance", v ?? 0.3)}
+                />
+                <p className="construction-note">
+                  Jeu d’insertion sur chaque face. Le calage ajoute uniquement
+                  l’espace de protection que vous choisissez.
+                </p>
+              </div>
+            )}
           </section>
           <section className="form-section">
             <div className="section-title">
@@ -441,7 +483,8 @@ export default function App() {
             {params.model === "press-slide" && (
               <p className="construction-note">
                 Peau fermée, nervures intérieures et couvercle de 1,2 mm
-                renforcé. Pas de pièce de verrouillage à perdre.
+                renforcé. Languette progressive calculée pour une pression plus
+                ferme.
               </p>
             )}
             <button
@@ -557,7 +600,6 @@ export default function App() {
             </div>
             <Viewer
               design={design}
-              params={params}
               mode={mode}
               showObject={showObject}
               reset={reset}
@@ -661,6 +703,58 @@ export default function App() {
                   1,6 / fond 2 mm). La masse du slicer peut différer.
                 </small>
               </div>
+            </div>
+          )}
+          {design?.mechanism && (
+            <div className={`fit-summary panel ${stale ? "muted" : ""}`}>
+              <div className="fit-summary-heading">
+                <strong>Espace autour de l’objet</strong>
+                <span>Cavité utile : {dimensions(design.inner)} mm</span>
+              </div>
+              <p>
+                Jeu total : <strong>{dimensions(design.objectSpace)} mm</strong>{" "}
+                (largeur × longueur × hauteur), dont {number(params.padding)} mm
+                de calage et {number(params.objectClearance)} mm de jeu par
+                face.
+              </p>
+              {design.mechanismExpansion.some((v) => v > 0.01) && (
+                <p>
+                  Minimum nécessaire au mécanisme :{" "}
+                  <strong>+{dimensions(design.mechanismExpansion)} mm</strong>.
+                  L’objet est centré dans cet espace.
+                </p>
+              )}
+              <p className="construction-note">
+                Hors cavité utile : zone du verrou de{" "}
+                {number(design.mechanism.rearAllowance)} mm à l’arrière et{" "}
+                {number(design.mechanism.headroom)} mm au-dessus pour le
+                mouvement.
+              </p>
+              <details className="spring-details">
+                <summary>
+                  Pression calculée : ≈{" "}
+                  {number(design.mechanism.estimatedForce)} N · languette
+                  adaptée
+                </summary>
+                <p>
+                  Plage indicative selon la rigidité du PLA :{" "}
+                  {number(design.mechanism.forceRange[0])}–
+                  {number(design.mechanism.forceRange[1])} N. À vérifier sur une
+                  impression d’essai.
+                </p>
+                <p>
+                  Longueur {number(design.mechanism.beamLength)} mm · largeur{" "}
+                  {number(2 * design.mechanism.tongueHalfWidth)} mm · épaisseur{" "}
+                  {number(design.mechanism.beamThickness)} →{" "}
+                  {number(design.mechanism.tipThickness)} mm.
+                </p>
+                <p>
+                  Déformation nominale calculée :{" "}
+                  {design.mechanism.strainPercent.toFixed(2)} % ; sur butée :{" "}
+                  {design.mechanism.stopStrainPercent.toFixed(2)} %. La durée de
+                  vie en cycles n’est pas prédite.
+                </p>
+              </details>
             </div>
           )}
           <div className="parts-strip">
@@ -935,7 +1029,9 @@ export default function App() {
             <ol>
               <li>
                 Mesurez l’objet et renseignez son poids. Le calage s’ajoute sur
-                les six faces.
+                les six faces, en plus du jeu d’insertion. Les trois dimensions
+                peuvent être saisies dans n’importe quel ordre pour le nouveau
+                modèle.
               </li>
               <li>
                 Choisissez la P1S ou la K2 classique. La marge du plateau est

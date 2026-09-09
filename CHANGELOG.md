@@ -6,6 +6,18 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.3.0] - 2026-09-09
+
+### Amélioré
+
+- Orientation automatique parmi les six permutations : résultat indépendant de l’ordre de saisie, priorité au volume imprimable puis à une faible hauteur.
+- Languette à épaisseur progressive, dimensionnée par calcul de flexion pour une pression nominale proche de 4 N ; ancrage renforcé près du rail.
+- Jeu d’insertion de 0,3 mm par face par défaut, calage séparé à zéro et minima mécaniques adaptatifs ; détail des espaces dans l’interface.
+- Animation d’ouverture cohérente avec le profil de flexion calculé et butée compatible avec le retrait initial.
+- Projets v3 ; migration des projets coulissants v2 avec conservation du calage choisi et invalidation de la pesée. Modèle à clavette conservé.
+- Tests des permutations, calcul de poutre, collisions et exports ; parcours navigateur étendu aux orientations et migrations.
+- Répertoires de compilation et d’exports exclus de la surveillance Vite pour éviter les fichiers verrouillés par Velopack.
+
 ## [0.2.1] - 2026-09-08
 
 ### Corrigé

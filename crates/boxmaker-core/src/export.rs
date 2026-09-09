@@ -94,11 +94,16 @@ mod tests {
                 *edges.entry((key(u), key(v))).or_insert(0usize) += 1;
             }
         }
+        let bad: Vec<_> = edges
+            .iter()
+            .filter(|&(&(u, v), &n)| n != 1 || edges.get(&(v, u)) != Some(&1))
+            .take(3)
+            .collect();
         assert!(
             edges
                 .iter()
                 .all(|(&(u, v), &n)| n == 1 && edges.get(&(v, u)) == Some(&1)),
-            "export is not closed and oriented after coordinate conversion"
+            "export is not closed and oriented after coordinate conversion: {bad:?}"
         );
     }
 

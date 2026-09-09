@@ -65,7 +65,14 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     host: "127.0.0.1",
-    watch: { ignored: ["**/target/**", "**/src-tauri/**"] },
+    watch: {
+      ignored: [
+        "**/target/**",
+        "**/src-tauri/**",
+        "**/artifacts/**",
+        "**/output/**",
+      ],
+    },
   },
   clearScreen: false,
 });
