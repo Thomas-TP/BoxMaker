@@ -6,6 +6,15 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.4.0] - 2026-09-11
+
+### Ajouté
+
+- Export de la boîte et du couvercle dans un seul fichier 3MF, avec deux objets indépendants posés à plat côte à côte.
+- Option « Boîte + couvercle » sélectionnée par défaut ; les exports individuels STL/3MF restent disponibles.
+- Export complet des trois pièces pour le modèle historique à clavette.
+- Contrôle des limites de chaque pièce avant export complet, tests des maillages et des positions, et vérification d’import dans Bambu Studio.
+
 ## [0.3.0] - 2026-09-09
 
 ### Amélioré

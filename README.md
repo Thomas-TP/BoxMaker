@@ -12,7 +12,7 @@ L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmak
 2. Choisir **Bambu Lab P1S (256³ mm)** ou **Creality K2 classique (260³ mm)**.
 3. Ajuster parois, fond et jeu dans les réglages avancés. Le profil est PLA ; le prix au kilo est modifiable.
 4. Inspecter les vues fermée, éclatée, pièces à plat et ouverture. Le curseur montre la pression sur la languette arrière puis le retrait du couvercle.
-5. Exporter **chaque pièce séparément** en STL ou 3MF : boîte et couvercle. Le 3MF contient une géométrie en millimètres, sans profil machine ou G-code. Imprimer le couvercle face lisse dessous, nervures dessus. L’ancien modèle conserve sa clavette, à imprimer sur sa tête.
+5. Cliquer sur **Exporter les 2 pièces** pour obtenir **un seul 3MF contenant la boîte et le couvercle**, sous forme d’objets indépendants posés à plat. Réorganiser les pièces dans le slicer ou utiliser plusieurs plateaux si nécessaire. Les exports individuels STL et 3MF restent disponibles via le menu « Pièce ». Le 3MF contient une géométrie en millimètres, sans profil machine ou G-code. Imprimer le couvercle face lisse dessous, nervures dessus. L’export complet de l’ancien modèle contient trois pièces, dont la clavette posée sur sa tête.
 6. Dans Bambu Studio ou Creality Print, vérifier l’orientation, les surplombs, les zones exclues et le poids calculé. Imprimer une petite boîte d’essai avant un emballage complet.
 7. Emballer, sécuriser la fermeture avec un adhésif et peser l’envoi fermé. Saisir ce poids réel dans « J’ai pesé mon envoi fermé ».
 
@@ -48,7 +48,7 @@ La nouvelle géométrie utilise Manifold via les bindings Rust `manifold-csg` po
 ## Validation et limites
 
 - Les tests Rust couvrent les changements de tranche de poids, dimensions et rotations postales, encombrants, entrées invalides, export hors plateau, fermeture/orientation des maillages, volume et structure des exports.
-- `scripts/browser-smoke.js` est un parcours Playwright CLI pour vérifier les limites P1S/K2, les tarifs lettre, le poids absent, les téléchargements et la sauvegarde/réouverture d’un projet.
+- `scripts/browser-smoke.js` est un parcours Playwright CLI pour vérifier les limites P1S/K2, les tarifs lettre, le poids absent, les exports individuels et complets, et la sauvegarde/réouverture d’un projet.
 - Le contrôle de plateau considère les pièces à plat avec rotation XY à 90° et une marge par bord. Les zones exclues spécifiques du slicer P1S ne sont pas modélisées. La vue « pièces à plat » n’est pas un placement automatique sur un plateau commun.
 - La masse est estimée avec une densité de 1,24 g/cm³ et le volume solide. Le slicer, la densité réelle du filament, l’infill et la pesée finale peuvent différer. Le coût matière exclut temps, énergie, calage et affranchissement.
 - **Prototype mécanique non homologué.** Cette révision n’a pas encore fait l’objet d’un essai physique. Le jeu, la fatigue de la languette PLA, les rails et la protection du contenu doivent être testés physiquement. Le petit pont arrière et les lèvres des rails sont à examiner dans le slicer. Voir [le choix mécanique et le protocole d’essai](docs/MECHANISM.md).

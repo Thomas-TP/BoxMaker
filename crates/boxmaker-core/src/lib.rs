@@ -326,6 +326,21 @@ pub fn dispatch(input: &str) -> Result<String, String> {
         "calculate" => serde_json::to_string(&design).map_err(|e| e.to_string()),
         "export" => {
             let part_id = request.part.as_deref().ok_or("Pièce manquante")?;
+            let format = request.format.as_deref().ok_or("Format manquant")?;
+            if part_id == "all" {
+                if format != "3mf" {
+                    return Err("L’export de toutes les pièces utilise le format 3MF.".into());
+                }
+                if design.parts.iter().any(|p| !p.fits) {
+                    return Err("Une pièce dépasse le plateau sélectionné. Export bloqué.".into());
+                }
+                let bytes = export::three_mf_parts(&design.parts)?;
+                return Ok(serde_json::json!({
+                    "bytes": bytes,
+                    "filename": "boxmaker-complet-PLA.3mf"
+                })
+                .to_string());
+            }
             let part = design
                 .parts
                 .iter()
@@ -334,7 +349,6 @@ pub fn dispatch(input: &str) -> Result<String, String> {
             if !part.fits {
                 return Err("Cette pièce dépasse le plateau sélectionné. Export bloqué.".into());
             }
-            let format = request.format.as_deref().ok_or("Format manquant")?;
             let bytes = match format {
                 "stl" => export::stl(&part.mesh),
                 "3mf" => export::three_mf(&part.mesh, &part.name)?,
@@ -349,6 +363,36 @@ pub fn dispatch(input: &str) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn complete_export_checks_format_and_every_part_fits() {
+        let request = |params: Params, format: &str| {
+            dispatch(
+                &serde_json::json!({
+                    "action": "export", "params": params, "part": "all", "format": format
+                })
+                .to_string(),
+            )
+        };
+        let result: serde_json::Value =
+            serde_json::from_str(&request(Params::default(), "3mf").unwrap()).unwrap();
+        assert_eq!(result["filename"], "boxmaker-complet-PLA.3mf");
+        assert!(!result["bytes"].as_array().unwrap().is_empty());
+        assert!(
+            request(Params::default(), "stl")
+                .unwrap_err()
+                .contains("3MF")
+        );
+        // A thin lid fits, but the tall body does not: the full export must fail.
+        let oversized = Params {
+            object: [20., 20., 257.],
+            ..Default::default()
+        };
+        let design = calculate(&oversized).unwrap();
+        assert!(design.parts.iter().find(|p| p.id == "lid").unwrap().fits);
+        assert!(!design.parts.iter().find(|p| p.id == "body").unwrap().fits);
+        assert!(request(oversized, "3mf").unwrap_err().contains("dépasse"));
+    }
+
     #[test]
     fn all_input_orders_generate_the_same_oriented_geometry() {
         for object in [

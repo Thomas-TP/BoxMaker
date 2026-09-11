@@ -91,7 +91,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [exporting, setExporting] = useState(false);
-  const [part, setPart] = useState("body");
+  const [part, setPart] = useState("all");
   const [format, setFormat] = useState("3mf");
   const [help, setHelp] = useState(false);
   const [advanced, setAdvanced] = useState(false);
@@ -125,7 +125,9 @@ export default function App() {
           if (id === sequence.current) {
             setDesign(result);
             setPart((current) =>
-              result.parts.some((p) => p.id === current) ? current : "body",
+              current === "all" || result.parts.some((p) => p.id === current)
+                ? current
+                : "body",
             );
           }
         })
@@ -773,8 +775,9 @@ export default function App() {
           </div>
           {mode === "print" && (
             <p className="below-note">
-              Pièces présentées côte à côte pour inspection. Chaque export
-              contient une seule pièce, posée à plat ; imprimez-les séparément.
+              Pièces présentées côte à côte, comme dans l’export 3MF complet.
+              Réorganisez-les dans le slicer ou répartissez-les sur plusieurs
+              plateaux si nécessaire.
             </p>
           )}
           <div className="design-note">
@@ -922,7 +925,18 @@ export default function App() {
             <div className="export-selects">
               <label>
                 Pièce
-                <select value={part} onChange={(e) => setPart(e.target.value)}>
+                <select
+                  value={part}
+                  onChange={(e) => {
+                    setPart(e.target.value);
+                    if (e.target.value === "all") setFormat("3mf");
+                  }}
+                >
+                  <option value="all">
+                    {params.model === "legacy"
+                      ? "Toutes les pièces (3)"
+                      : "Boîte + couvercle"}
+                  </option>
                   <option value="body">Boîte</option>
                   <option value="lid">Couvercle</option>
                   {params.model === "legacy" && (
@@ -934,6 +948,7 @@ export default function App() {
                 Format
                 <select
                   value={format}
+                  disabled={part === "all"}
                   onChange={(e) => setFormat(e.target.value)}
                 >
                   <option value="3mf">3MF</option>
@@ -944,7 +959,11 @@ export default function App() {
             <button
               type="button"
               className="primary"
-              disabled={stale || exporting || !selectedPart?.fits}
+              disabled={
+                stale ||
+                exporting ||
+                !(part === "all" ? allFit : selectedPart?.fits)
+              }
               onClick={() => void exportPart()}
             >
               {exporting ? (
@@ -953,17 +972,32 @@ export default function App() {
                 <ArrowDownToLine size={17} />
               )}{" "}
               Exporter{" "}
-              {part === "body"
-                ? "la boîte"
-                : part === "lid"
-                  ? "le couvercle"
-                  : "la clavette"}
+              {part === "all"
+                ? params.model === "legacy"
+                  ? "les 3 pièces"
+                  : "les 2 pièces"
+                : part === "body"
+                  ? "la boîte"
+                  : part === "lid"
+                    ? "le couvercle"
+                    : "la clavette"}
               <ArrowRight size={16} />
             </button>
             <p>
-              Géométrie en mm · une pièce par fichier
-              <br />
-              Réglages d’impression à choisir dans le slicer.
+              {part === "all" ? (
+                <>
+                  Un fichier 3MF · pièces séparées, posées à plat.
+                  <br />
+                  Réorganisez-les ou répartissez-les sur plusieurs plateaux dans
+                  le slicer selon la place disponible.
+                </>
+              ) : (
+                <>
+                  Géométrie en mm · une pièce par fichier
+                  <br />
+                  Réglages d’impression à choisir dans le slicer.
+                </>
+              )}
             </p>
           </section>
         </aside>
@@ -1038,8 +1072,9 @@ export default function App() {
                 réglable.
               </li>
               <li>
-                Exportez la boîte et le couvercle séparément en 3MF ou STL.
-                L’ancien modèle comporte aussi une clavette.
+                Exportez toutes les pièces dans un seul 3MF, ou choisissez une
+                pièce seule en 3MF ou STL. L’ancien modèle inclut aussi sa
+                clavette dans l’export complet.
               </li>
               <li>
                 Dans le slicer, vérifiez la géométrie, les zones exclues,

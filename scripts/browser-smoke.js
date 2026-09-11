@@ -4,6 +4,14 @@ async (page) => {
   const assert = (ok, text) => { if (!ok) throw new Error(text); };
   await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
   await waitReady();
+  await page.getByRole('button',{name:'Exporter les 2 pièces',exact:true}).waitFor();
+  assert(await page.getByRole('combobox',{name:'Pièce',exact:true}).inputValue() === 'all', 'Complete export should be the default');
+  const complete = page.waitForEvent('download');
+  await page.getByRole('button',{name:'Exporter les 2 pièces',exact:true}).click();
+  const completeFile = await complete;
+  assert(completeFile.suggestedFilename() === 'boxmaker-complet-PLA.3mf', 'Complete export is a single 3MF');
+  await completeFile.saveAs('output/playwright/complete.3mf');
+  await page.locator('.export.panel').screenshot({path:'output/playwright/combined-export.png'});
   for (const dims of [[100,70,30],[100,30,70],[70,100,30],[70,30,100],[30,100,70],[30,70,100]]) {
     for (let i=0;i<3;i++) await page.getByRole('spinbutton',{name:`Dimension ${'ABC'[i]} mm`,exact:true}).fill(String(dims[i]));
     await page.waitForFunction(() => !document.querySelector('.metrics.muted'));
@@ -17,6 +25,9 @@ async (page) => {
   await page.getByText('Vérifiez les dimensions des pièces',{exact:true}).waitFor();
   await waitReady();
   assert(await page.getByRole('button',{name:'Exporter la boîte',exact:true}).isDisabled(),'Oversized P1S export should be blocked');
+  await page.getByRole('combobox',{name:'Pièce',exact:true}).selectOption('all');
+  assert(await page.getByRole('button',{name:'Exporter les 2 pièces',exact:true}).isDisabled(), 'Complete export also checks the printer boundary');
+  await page.getByRole('combobox',{name:'Pièce',exact:true}).selectOption('body');
   await page.getByRole('button',{name:'Creality K2 260 × 260 × 260 mm',exact:true}).click();
   await page.getByText('Chaque pièce tient sur le plateau utile',{exact:true}).waitFor();
   await waitReady();
@@ -67,6 +78,9 @@ async (page) => {
     await page.getByRole('button',{name:'Exporter le couvercle',exact:true}).click();
     await (await download).saveAs(`output/playwright/lid.${format}`);
   }
+  await page.getByRole('combobox',{name:'Pièce',exact:true}).selectOption('all');
+  assert(await page.getByRole('combobox',{name:'Format',exact:true}).inputValue() === '3mf', 'Switching from individual STL to all selects 3MF');
+  assert(await page.getByRole('combobox',{name:'Format',exact:true}).isDisabled(), 'Complete export keeps the supported 3MF format');
   await page.locator('input[type=file]').setInputFiles('scripts/fixtures/press-slide-v2.boxmaker.json');
   await page.getByText('Projet adapté à la nouvelle fermeture et orienté automatiquement. Repesez l’envoi.',{exact:true}).waitFor();
   await waitReady();
@@ -77,7 +91,10 @@ async (page) => {
   await page.getByText('Projet chargé.',{exact:true}).waitFor();
   await waitReady();
   assert(await page.getByRole('combobox',{name:'Modèle de fermeture',exact:true}).inputValue() === 'legacy','Old projects retain the original geometry');
-  assert(await page.getByRole('combobox',{name:'Pièce',exact:true}).locator('option').count() === 3,'Old model retains three pieces');
+  assert(await page.getByRole('combobox',{name:'Pièce',exact:true}).locator('option').count() === 4,'Old model retains three pieces and the complete option');
+  const legacyComplete = page.waitForEvent('download');
+  await page.getByRole('button',{name:'Exporter les 3 pièces',exact:true}).click();
+  await (await legacyComplete).saveAs('output/playwright/complete-legacy.3mf');
   await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
   await waitReady();
   await page.screenshot({path:'output/playwright/boxmaker-verified.png',timeout:30000,fullPage:true});
