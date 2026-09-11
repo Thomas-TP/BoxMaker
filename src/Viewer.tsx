@@ -59,13 +59,13 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI / 2 + 0.08;
     const objects: THREE.Object3D[] = [];
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x8e9c88, 3));
-    const sun = new THREE.DirectionalLight(0xfffaf0, 4);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x7085a5, 3));
+    const sun = new THREE.DirectionalLight(0xffffff, 4);
     sun.position.set(150, 350, 200);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     scene.add(sun);
-    const fill = new THREE.DirectionalLight(0xdce8f7, 2);
+    const fill = new THREE.DirectionalLight(0xdce8ff, 2);
     fill.position.set(-200, 100, -100);
     scene.add(fill);
     const model = new THREE.Group();
@@ -116,7 +116,7 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
       indexed.dispose();
       geometry.computeVertexNormals();
       const material = new THREE.MeshStandardMaterial({
-        color: [0x76946a, 0xaebd91, 0xe1a266][index],
+        color: [0x6088ed, 0xa9c0f5, 0xe6b678][index],
         roughness: 0.78,
         metalness: 0.02,
         side: THREE.DoubleSide,
@@ -149,7 +149,7 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
       const edges = new THREE.LineSegments(
         new THREE.EdgesGeometry(geometry, 30),
         new THREE.LineBasicMaterial({
-          color: 0x45573d,
+          color: 0x1e365f,
           transparent: true,
           opacity: 0.2,
         }),
@@ -202,8 +202,8 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     const grid = new THREE.GridHelper(
       Math.ceil(extent / 10) * 30,
       30,
-      0xc4cdbf,
-      0xd8ded3,
+      0x35445e,
+      0x27364b,
     );
     grid.position.y = -0.3;
     scene.add(grid);
@@ -216,7 +216,7 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     sun.shadow.bias = -0.0005;
     sun.position.set(extent, extent * 3, extent * 2);
     const fit = () => {
-      const distance = extent * (camera.aspect < 1.2 ? 2.9 : 2.2);
+      const distance = extent * (camera.aspect < 1.2 ? 2.5 : 2.05);
       camera.position.set(distance * 0.86, distance * 0.72, distance);
       controls.target.set(0, size.y * 0.32, 0);
       controls.update();

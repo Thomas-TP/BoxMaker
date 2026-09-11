@@ -18,6 +18,10 @@ L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmak
 
 Les projets peuvent être enregistrés en `.boxmaker.json` puis rouverts. Un projet coulissant v2 est adapté au mécanisme v0.3, conserve son calage et doit être repesé ; un projet à clavette conserve sa géométrie. Modifier la géométrie ou le contenu efface le poids mesuré pour éviter un tarif calculé sur une ancienne pesée.
 
+## Interface
+
+L’aperçu 3D occupe le centre de l’atelier. Les paramètres sont à gauche, l’export et l’expédition à droite ; les panneaux défilent indépendamment sur les grandes fenêtres. Les détails de la cavité et du ressort se déplient sous l’aperçu. Le choix de l’ancien modèle se trouve dans les réglages avancés. Un raccourci d’export apparaît dans la barre d’outils sur les fenêtres plus étroites.
+
 ## Développement
 
 Prérequis : Windows, Rust stable/MSVC et outils C++ de Visual Studio, Bun, WebView2. Outils testés : Rust 1.98.0, Bun 1.3.11, Velopack 1.2.0. Pour l’installateur : .NET SDK 8 ou compatible et `dotnet tool restore`, qui installe la version de Velopack verrouillée dans `.config/dotnet-tools.json`.
@@ -58,7 +62,7 @@ La nouvelle géométrie utilise Manifold via les bindings Rust `manifold-csg` po
 
 L’application initialise `VelopackApp` avant toute initialisation de l’interface. L’installation Windows et les fichiers de release sont générés par Velopack ; le packaging NSIS de Tauri est désactivé. WebView2 est déclaré comme prérequis de l’installateur.
 
-Les mises à jour utilisent [les releases du dépôt GitHub](https://github.com/Thomas-TP/BoxMaker/releases), sans identifiants embarqués. Dans le guide, « Versions & mises à jour » permet de vérifier, lire les notes puis télécharger une version. Le bouton d’installation enregistre d’abord le projet et redémarre ensuite l’application. Aucune vérification réseau, aucun téléchargement et aucun redémarrage ne sont déclenchés automatiquement au lancement. Les préversions sont incluses pendant la phase `0.x`.
+Les mises à jour utilisent [les releases du dépôt GitHub](https://github.com/Thomas-TP/BoxMaker/releases), sans identifiants embarqués. Le bouton « Mises à jour » dans la barre d’outils permet de vérifier, lire les notes puis télécharger une version. « Installer et redémarrer » fonctionne sans enregistrer le projet ; une seconde action permet d’enregistrer puis d’installer. Les modifications non enregistrées sont perdues au redémarrage. Aucune vérification réseau, aucun téléchargement et aucun redémarrage ne sont déclenchés automatiquement au lancement. Les préversions sont incluses pendant la phase `0.x`.
 
 Le workflow GitHub vérifie et construit chaque push/PR. Un tag de version valide déclenche ensuite la publication de la release avec installateur, portable, fichiers Velopack et SHA-256. Voir [le guide de release](docs/RELEASING.md). Aucun compte externe n’est nécessaire pour concevoir une boîte localement.
 

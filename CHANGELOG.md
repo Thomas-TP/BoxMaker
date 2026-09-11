@@ -6,6 +6,19 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.5.0] - 2026-09-11
+
+### Amélioré
+
+- Nouvelle interface : tons bleu et ardoise, aperçu 3D agrandi, typographie plus lisible et panneaux de configuration et d’export réorganisés.
+- Export complet placé en haut, avec raccourci dans la barre d’outils sur les petites fenêtres.
+- Détails de cavité repliables, ancien modèle déplacé dans les réglages avancés et sélection du contenu des champs numériques au focus.
+- Mises à jour accessibles depuis la barre d’outils, dans une fenêtre dédiée ; état de téléchargement conservé à sa fermeture.
+- Installation et redémarrage sans sauvegarde obligatoire. L’enregistrement du projet reste une action facultative distincte.
+- Suppression du bloc comparatif « PLA en moins ».
+- Invalidation de la pesée après un changement d’imprimante ou de marge plateau, car l’orientation de la boîte peut changer.
+- Fenêtres de dialogue avec gestion native du focus et fermeture par Échap.
+
 ## [0.4.0] - 2026-09-11
 
 ### Ajouté

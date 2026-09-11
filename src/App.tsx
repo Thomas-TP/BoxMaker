@@ -13,16 +13,17 @@ import {
   Maximize,
   Package,
   Printer,
+  RefreshCw,
   RotateCcw,
   Save,
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   Truck,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Modal } from "./Modal";
 import type { Design, Params } from "./types";
 import { defaults, download, engine } from "./types";
 import { Updates } from "./Updates";
@@ -60,6 +61,7 @@ function Field({
       <span>{label}</span>
       <div>
         <input
+          onFocus={(e) => e.currentTarget.select()}
           type="number"
           min={min}
           max={max}
@@ -94,6 +96,7 @@ export default function App() {
   const [part, setPart] = useState("all");
   const [format, setFormat] = useState("3mf");
   const [help, setHelp] = useState(false);
+  const [updatesOpen, setUpdatesOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const sequence = useRef(0);
   const upload = useRef<HTMLInputElement>(null);
@@ -110,6 +113,8 @@ export default function App() {
         "floor",
         "clearance",
         "model",
+        "printer",
+        "plateMargin",
       ].includes(key)
         ? { measuredTotal: null }
         : {}),
@@ -228,14 +233,34 @@ export default function App() {
             <Box size={25} strokeWidth={1.6} />
           </div>
           <span>
-            boxmaker<span className="brand-by">BY SWISS3DESIGN</span>
+            boxmaker<span className="brand-by">Swiss3Design</span>
           </span>
         </div>
         <div className="top-center">
-          <span className="status-dot" /> Atelier d’emballage{" "}
+          <span className="status-dot" /> Atelier de création{" "}
           <span className="version">v{__APP_VERSION__}</span>
         </div>
         <div className="header-actions">
+          <button
+            type="button"
+            className="primary compact-export"
+            disabled={
+              stale ||
+              exporting ||
+              !(part === "all" ? allFit : selectedPart?.fits)
+            }
+            onClick={() => void exportPart()}
+          >
+            <ArrowDownToLine size={15} /> Exporter
+          </button>
+          <button
+            type="button"
+            className="text-button updates-button"
+            onClick={() => setUpdatesOpen(true)}
+          >
+            <RefreshCw size={15} /> <span>Mises à jour</span>
+          </button>
+          <span className="header-separator" />
           <button
             type="button"
             className="text-button"
@@ -274,12 +299,12 @@ export default function App() {
 
       <div className="page-heading">
         <div>
-          <div className="eyebrow">DE L’OBJET À L’EXPÉDITION</div>
-          <h1>Une boîte. Juste à sa mesure.</h1>
-          <p>Créez votre emballage en PLA et trouvez le bon tarif postal.</p>
+          <div className="eyebrow">VOTRE ATELIER D’EMBALLAGE</div>
+          <h1>Votre boîte, sur mesure.</h1>
+          <p>Vos dimensions. Deux pièces. Prêt à imprimer.</p>
         </div>
         <div className="swiss-label">
-          <span className="swiss-cross">✚</span> Pensé pour la Suisse
+          <span className="swiss-cross">✚</span> Expédition en Suisse
         </div>
       </div>
 
@@ -287,7 +312,7 @@ export default function App() {
         <aside className="parameters panel">
           <div className="panel-heading">
             <SlidersHorizontal size={18} />
-            <h2>Votre configuration</h2>
+            <h2>Configuration</h2>
             <button
               type="button"
               className="icon-button"
@@ -360,8 +385,7 @@ export default function App() {
                     : "Calcul…"}{" "}
                   · largeur × longueur × hauteur
                 </span>
-                Ordre de saisie libre. La boîte prend l’orientation la plus
-                basse qui tient sur l’imprimante.
+                Les dimensions peuvent être saisies dans n’importe quel ordre.
               </p>
             )}
             {params.model === "press-slide" && (
@@ -375,8 +399,7 @@ export default function App() {
                   onChange={(v) => set("objectClearance", v ?? 0.3)}
                 />
                 <p className="construction-note">
-                  Jeu d’insertion sur chaque face. Le calage ajoute uniquement
-                  l’espace de protection que vous choisissez.
+                  Espace libre par face, en plus du calage.
                 </p>
               </div>
             )}
@@ -459,36 +482,6 @@ export default function App() {
                 </small>
               </span>
             </div>
-            <label className="model-choice">
-              Modèle de fermeture
-              <select
-                value={params.model}
-                onChange={(e) => {
-                  const model = e.target.value as Params["model"];
-                  setParams((p) => ({
-                    ...p,
-                    model,
-                    wall: model === "legacy" ? 1.6 : 1.2,
-                    floor: model === "legacy" ? 2 : 0.8,
-                    measuredTotal: null,
-                  }));
-                  setMode("exploded");
-                  setOpening(0);
-                }}
-              >
-                <option value="press-slide">
-                  Coulissant à pression · nervuré
-                </option>
-                <option value="legacy">Ancienne boîte · clavette</option>
-              </select>
-            </label>
-            {params.model === "press-slide" && (
-              <p className="construction-note">
-                Peau fermée, nervures intérieures et couvercle de 1,2 mm
-                renforcé. Languette progressive calculée pour une pression plus
-                ferme.
-              </p>
-            )}
             <button
               type="button"
               className="advanced-toggle"
@@ -500,6 +493,30 @@ export default function App() {
             </button>
             {advanced && (
               <div className="advanced-fields">
+                <label className="model-choice">
+                  Modèle de fermeture
+                  <select
+                    value={params.model}
+                    onChange={(e) => {
+                      const model = e.target.value as Params["model"];
+                      setParams((p) => ({
+                        ...p,
+                        model,
+                        wall: model === "legacy" ? 1.6 : 1.2,
+                        floor: model === "legacy" ? 2 : 0.8,
+                        measuredTotal: null,
+                      }));
+                      setMode("exploded");
+                      setOpening(0);
+                    }}
+                  >
+                    <option value="press-slide">
+                      Coulissant à pression · nervuré
+                    </option>
+                    <option value="legacy">Ancienne boîte · clavette</option>
+                  </select>
+                </label>
+
                 <div className="field-grid two">
                   <Field
                     label="Jeu par côté"
@@ -568,7 +585,9 @@ export default function App() {
                     ? "Paramètres à corriger"
                     : "Aperçu de votre boîte"}
               </span>
-              <span className="prototype-tag">PROTOTYPE PLA</span>
+              <span className="prototype-tag">
+                <Box size={12} /> APERÇU 3D
+              </span>
             </div>
             <div className="view-modes">
               {(
@@ -582,6 +601,7 @@ export default function App() {
                   type="button"
                   key={v.id}
                   onClick={() => setMode(v.id)}
+                  aria-pressed={mode === v.id}
                   className={mode === v.id ? "active" : ""}
                 >
                   {v.label}
@@ -590,6 +610,7 @@ export default function App() {
               {params.model === "press-slide" && (
                 <button
                   type="button"
+                  aria-pressed={mode === "open"}
                   className={mode === "open" ? "active" : ""}
                   onClick={() => {
                     setMode("open");
@@ -687,32 +708,14 @@ export default function App() {
               <strong>{design ? money(design.materialCost) : "—"}</strong>
             </div>
           </div>
-          {design?.model === "press-slide" && (
-            <div className={`material-saving ${stale ? "muted" : ""}`}>
-              <Sparkles size={18} />
-              <div>
-                <strong>
-                  {design.plasticWeight < design.referencePlasticWeight
-                    ? `${number((1 - design.plasticWeight / design.referencePlasticWeight) * 100)} % de PLA en moins`
-                    : "Configuration plus épaisse que la référence"}
-                </strong>
-                <span>
-                  {number(design.referencePlasticWeight)} g →{" "}
-                  {number(design.plasticWeight)} g · même volume utile
-                </span>
-                <small>
-                  Comparaison géométrique à l’ancienne boîte standard (parois
-                  1,6 / fond 2 mm). La masse du slicer peut différer.
-                </small>
-              </div>
-            </div>
-          )}
           {design?.mechanism && (
-            <div className={`fit-summary panel ${stale ? "muted" : ""}`}>
-              <div className="fit-summary-heading">
+            <details className={`fit-summary panel ${stale ? "muted" : ""}`}>
+              <summary className="fit-summary-heading">
                 <strong>Espace autour de l’objet</strong>
-                <span>Cavité utile : {dimensions(design.inner)} mm</span>
-              </div>
+                <span>
+                  {dimensions(design.inner)} mm <ChevronDown size={15} />
+                </span>
+              </summary>
               <p>
                 Jeu total : <strong>{dimensions(design.objectSpace)} mm</strong>{" "}
                 (largeur × longueur × hauteur), dont {number(params.padding)} mm
@@ -757,9 +760,9 @@ export default function App() {
                   vie en cycles n’est pas prédite.
                 </p>
               </details>
-            </div>
+            </details>
           )}
-          <div className="parts-strip">
+          <div className="parts-strip panel">
             {design?.parts.map((p, i) => (
               <div key={p.id}>
                 <span className={`part-dot part-${i}`} />
@@ -780,18 +783,100 @@ export default function App() {
               plateaux si nécessaire.
             </p>
           )}
-          <div className="design-note">
-            <Sparkles size={18} />
-            <p>
-              <strong>Simple à imprimer. Pratique à ouvrir.</strong>{" "}
-              {params.model === "press-slide"
-                ? "Poussez jusqu’au clic. Pour ouvrir, appuyez sur la zone striée à l’arrière, puis tirez le couvercle. Ajoutez un adhésif de scellement pour l’expédition."
-                : "Le couvercle glisse dans ses rails. La clavette bloque son ouverture ; ajoutez un adhésif pour le transport."}
-            </p>
-          </div>
         </section>
 
         <aside className="shipping-column">
+          <section className="export panel">
+            <div className="panel-heading">
+              <FileDown size={18} />
+              <h2>Exporter votre boîte</h2>
+            </div>
+            <div className={`fit-status ${allFit ? "" : "invalid"}`}>
+              {allFit ? <Check size={15} /> : <X size={15} />}
+              <span>
+                {allFit
+                  ? "Chaque pièce tient sur le plateau utile"
+                  : "Vérifiez les dimensions des pièces"}
+              </span>
+            </div>
+            <div className="export-selects">
+              <label>
+                Pièce
+                <select
+                  value={part}
+                  onChange={(e) => {
+                    setPart(e.target.value);
+                    if (e.target.value === "all") setFormat("3mf");
+                  }}
+                >
+                  <option value="all">
+                    {params.model === "legacy"
+                      ? "Toutes les pièces (3)"
+                      : "Boîte + couvercle"}
+                  </option>
+                  <option value="body">Boîte</option>
+                  <option value="lid">Couvercle</option>
+                  {params.model === "legacy" && (
+                    <option value="key">Clavette</option>
+                  )}
+                </select>
+              </label>
+              <label>
+                Format
+                <select
+                  value={format}
+                  disabled={part === "all"}
+                  onChange={(e) => setFormat(e.target.value)}
+                >
+                  <option value="3mf">3MF</option>
+                  <option value="stl">STL</option>
+                </select>
+              </label>
+            </div>
+            <button
+              type="button"
+              className="primary"
+              disabled={
+                stale ||
+                exporting ||
+                !(part === "all" ? allFit : selectedPart?.fits)
+              }
+              onClick={() => void exportPart()}
+            >
+              {exporting ? (
+                <LoaderCircle className="spin" size={17} />
+              ) : (
+                <ArrowDownToLine size={17} />
+              )}{" "}
+              Exporter{" "}
+              {part === "all"
+                ? params.model === "legacy"
+                  ? "les 3 pièces"
+                  : "les 2 pièces"
+                : part === "body"
+                  ? "la boîte"
+                  : part === "lid"
+                    ? "le couvercle"
+                    : "la clavette"}
+              <ArrowRight size={16} />
+            </button>
+            <p>
+              {part === "all" ? (
+                <>
+                  Un fichier 3MF · pièces séparées, posées à plat.
+                  <br />
+                  Réorganisez-les ou répartissez-les sur plusieurs plateaux dans
+                  le slicer selon la place disponible.
+                </>
+              ) : (
+                <>
+                  Géométrie en mm · une pièce par fichier
+                  <br />
+                  Réglages d’impression à choisir dans le slicer.
+                </>
+              )}
+            </p>
+          </section>
           <section className={`shipping panel ${stale ? "muted" : ""}`}>
             <div className="panel-heading">
               <Truck size={19} />
@@ -909,97 +994,6 @@ export default function App() {
               Consulter les tarifs de la Poste <ArrowRight size={12} />
             </a>
           </section>
-          <section className="export panel">
-            <div className="panel-heading">
-              <FileDown size={18} />
-              <h2>Prêt pour le slicer</h2>
-            </div>
-            <div className={`fit-status ${allFit ? "" : "invalid"}`}>
-              {allFit ? <Check size={15} /> : <X size={15} />}
-              <span>
-                {allFit
-                  ? "Chaque pièce tient sur le plateau utile"
-                  : "Vérifiez les dimensions des pièces"}
-              </span>
-            </div>
-            <div className="export-selects">
-              <label>
-                Pièce
-                <select
-                  value={part}
-                  onChange={(e) => {
-                    setPart(e.target.value);
-                    if (e.target.value === "all") setFormat("3mf");
-                  }}
-                >
-                  <option value="all">
-                    {params.model === "legacy"
-                      ? "Toutes les pièces (3)"
-                      : "Boîte + couvercle"}
-                  </option>
-                  <option value="body">Boîte</option>
-                  <option value="lid">Couvercle</option>
-                  {params.model === "legacy" && (
-                    <option value="key">Clavette</option>
-                  )}
-                </select>
-              </label>
-              <label>
-                Format
-                <select
-                  value={format}
-                  disabled={part === "all"}
-                  onChange={(e) => setFormat(e.target.value)}
-                >
-                  <option value="3mf">3MF</option>
-                  <option value="stl">STL</option>
-                </select>
-              </label>
-            </div>
-            <button
-              type="button"
-              className="primary"
-              disabled={
-                stale ||
-                exporting ||
-                !(part === "all" ? allFit : selectedPart?.fits)
-              }
-              onClick={() => void exportPart()}
-            >
-              {exporting ? (
-                <LoaderCircle className="spin" size={17} />
-              ) : (
-                <ArrowDownToLine size={17} />
-              )}{" "}
-              Exporter{" "}
-              {part === "all"
-                ? params.model === "legacy"
-                  ? "les 3 pièces"
-                  : "les 2 pièces"
-                : part === "body"
-                  ? "la boîte"
-                  : part === "lid"
-                    ? "le couvercle"
-                    : "la clavette"}
-              <ArrowRight size={16} />
-            </button>
-            <p>
-              {part === "all" ? (
-                <>
-                  Un fichier 3MF · pièces séparées, posées à plat.
-                  <br />
-                  Réorganisez-les ou répartissez-les sur plusieurs plateaux dans
-                  le slicer selon la place disponible.
-                </>
-              ) : (
-                <>
-                  Géométrie en mm · une pièce par fichier
-                  <br />
-                  Réglages d’impression à choisir dans le slicer.
-                </>
-              )}
-            </p>
-          </section>
         </aside>
       </main>
       <details className="warnings">
@@ -1042,118 +1036,113 @@ export default function App() {
           </button>
         </div>
       )}
-      {help && (
-        <div className="modal-backdrop">
-          <section
-            className="help-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="help-title"
+      <Modal
+        open={help}
+        onClose={() => setHelp(false)}
+        title="Guide d’utilisation"
+      >
+        <section className="help-modal">
+          <div className="eyebrow">MODE D’EMPLOI</div>
+          <h2 id="help-title">De votre objet à sa boîte.</h2>
+          <ol>
+            <li>
+              Mesurez l’objet et renseignez son poids. Le calage s’ajoute sur
+              les six faces, en plus du jeu d’insertion. Les trois dimensions
+              peuvent être saisies dans n’importe quel ordre pour le nouveau
+              modèle.
+            </li>
+            <li>
+              Choisissez la P1S ou la K2 classique. La marge du plateau est
+              réglable.
+            </li>
+            <li>
+              Exportez toutes les pièces dans un seul 3MF, ou choisissez une
+              pièce seule en 3MF ou STL. L’ancien modèle inclut aussi sa
+              clavette dans l’export complet.
+            </li>
+            <li>
+              Dans le slicer, vérifiez la géométrie, les zones exclues,
+              l’adhérence et les petits surplombs des rails. Imprimez d’abord la
+              petite boîte d’essai des réglages avancés.
+            </li>
+            <li>
+              Testez le clic et le déverrouillage sans forcer, protégez l’objet,
+              scellez le couvercle avec un adhésif et pesez l’envoi fermé.
+            </li>
+          </ol>
+          <h3>Formats extérieurs · Suisse</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Limite</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>B5</td>
+                <td>250 × 176 × 20 mm · 500 g</td>
+              </tr>
+              <tr>
+                <td>B5 épaisse</td>
+                <td>Jusqu’à 50 mm · + CHF 2 en A/B/A Plus</td>
+              </tr>
+              <tr>
+                <td>B4</td>
+                <td>353 × 250 × 20 mm · 1 kg</td>
+              </tr>
+              <tr>
+                <td>Colis standard</td>
+                <td>1000 × 600 × 600 mm · 30 kg</td>
+              </tr>
+              <tr>
+                <td>Encombrant</td>
+                <td>
+                  Longueur ≤ 2000 mm / 30 kg ; ≤ 2500 mm / 10 kg. L + 2l + 2h ≤
+                  4000 mm.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            La boîte est un prototype, pas un emballage homologué. Les
+            dimensions intérieures annoncées correspondent à l’espace libre sous
+            le couvercle, entre les renforts.
+          </p>
+          <p>
+            <a
+              href="https://www.post.ch/fr/expedier-des-lettres/lettres-suisse"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Tarifs lettres
+            </a>{" "}
+            ·{" "}
+            <a
+              href="https://www.post.ch/fr/expedier-des-colis/encombrant"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Limites encombrants
+            </a>
+          </p>
+
+          <button
+            type="button"
+            className="primary"
+            onClick={() => setHelp(false)}
           >
-            <button
-              type="button"
-              className="icon-button modal-close"
-              aria-label="Fermer le guide"
-              onClick={() => setHelp(false)}
-            >
-              <X />
-            </button>
-            <div className="eyebrow">MODE D’EMPLOI</div>
-            <h2 id="help-title">De votre objet à sa boîte.</h2>
-            <ol>
-              <li>
-                Mesurez l’objet et renseignez son poids. Le calage s’ajoute sur
-                les six faces, en plus du jeu d’insertion. Les trois dimensions
-                peuvent être saisies dans n’importe quel ordre pour le nouveau
-                modèle.
-              </li>
-              <li>
-                Choisissez la P1S ou la K2 classique. La marge du plateau est
-                réglable.
-              </li>
-              <li>
-                Exportez toutes les pièces dans un seul 3MF, ou choisissez une
-                pièce seule en 3MF ou STL. L’ancien modèle inclut aussi sa
-                clavette dans l’export complet.
-              </li>
-              <li>
-                Dans le slicer, vérifiez la géométrie, les zones exclues,
-                l’adhérence et les petits surplombs des rails. Imprimez d’abord
-                la petite boîte d’essai des réglages avancés.
-              </li>
-              <li>
-                Testez le clic et le déverrouillage sans forcer, protégez
-                l’objet, scellez le couvercle avec un adhésif et pesez l’envoi
-                fermé.
-              </li>
-            </ol>
-            <h3>Formats extérieurs · Suisse</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Service</th>
-                  <th>Limite</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>B5</td>
-                  <td>250 × 176 × 20 mm · 500 g</td>
-                </tr>
-                <tr>
-                  <td>B5 épaisse</td>
-                  <td>Jusqu’à 50 mm · + CHF 2 en A/B/A Plus</td>
-                </tr>
-                <tr>
-                  <td>B4</td>
-                  <td>353 × 250 × 20 mm · 1 kg</td>
-                </tr>
-                <tr>
-                  <td>Colis standard</td>
-                  <td>1000 × 600 × 600 mm · 30 kg</td>
-                </tr>
-                <tr>
-                  <td>Encombrant</td>
-                  <td>
-                    Longueur ≤ 2000 mm / 30 kg ; ≤ 2500 mm / 10 kg. L + 2l + 2h
-                    ≤ 4000 mm.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <p>
-              La boîte est un prototype, pas un emballage homologué. Les
-              dimensions intérieures annoncées correspondent à l’espace libre
-              sous le couvercle, entre les renforts.
-            </p>
-            <p>
-              <a
-                href="https://www.post.ch/fr/expedier-des-lettres/lettres-suisse"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Tarifs lettres
-              </a>{" "}
-              ·{" "}
-              <a
-                href="https://www.post.ch/fr/expedier-des-colis/encombrant"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Limites encombrants
-              </a>
-            </p>
-            <Updates saveProject={saveProject} canSave={!stale} />
-            <button
-              type="button"
-              className="primary"
-              onClick={() => setHelp(false)}
-            >
-              Créer ma boîte <ArrowRight size={16} />
-            </button>
-          </section>
-        </div>
-      )}
+            Créer ma boîte <ArrowRight size={16} />
+          </button>
+        </section>
+      </Modal>
+      <Modal
+        open={updatesOpen}
+        onClose={() => setUpdatesOpen(false)}
+        title="Mises à jour"
+      >
+        <Updates saveProject={saveProject} canSave={!stale} />
+      </Modal>
     </div>
   );
 }

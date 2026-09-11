@@ -90,6 +90,7 @@ async (page) => {
   await page.locator('input[type=file]').setInputFiles('scripts/fixtures/legacy.boxmaker.json');
   await page.getByText('Projet chargé.',{exact:true}).waitFor();
   await waitReady();
+  await page.getByRole('button',{name:'Réglages avancés',exact:true}).click();
   assert(await page.getByRole('combobox',{name:'Modèle de fermeture',exact:true}).inputValue() === 'legacy','Old projects retain the original geometry');
   assert(await page.getByRole('combobox',{name:'Pièce',exact:true}).locator('option').count() === 4,'Old model retains three pieces and the complete option');
   const legacyComplete = page.waitForEvent('download');
