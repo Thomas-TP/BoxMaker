@@ -13,5 +13,5 @@
     "windows": [{ "title": "Boxmaker · Swiss3Design", "width": 1440, "height": 940, "minWidth": 960, "minHeight": 700 }],
     "security": { "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost; worker-src 'self' blob:" }
   },
-  "bundle": { "active": false, "icon": [] }
+  "bundle": { "active": false, "icon": [], "publisher": "Thomas Prud'homme" }
 }

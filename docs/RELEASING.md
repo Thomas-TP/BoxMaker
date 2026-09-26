@@ -40,4 +40,17 @@ Une release déjà publiée n’est jamais écrasée automatiquement. En cas de 
 - Vérifier `releases.win.json` et la présence du paquet `.nupkg` de même version.
 - Ne pas annoncer un cycle installation/mise à jour comme validé avant de l’avoir réellement testé.
 
-Le workflow produit actuellement des packages complets. Les mises à jour différentielles peuvent être ajoutées plus tard en téléchargeant le paquet précédent avant `vpk pack`. La signature des exécutables nécessite un certificat ou un service de signature configuré séparément ; aucun secret de signature n’est inclus dans le dépôt.
+Le workflow produit actuellement des packages complets. Les mises à jour différentielles peuvent être ajoutées plus tard en téléchargeant le paquet précédent avant `vpk pack`.
+
+## Éditeur Windows et signature
+
+`Thomas Prud'homme` est le nom d'éditeur inscrit dans les métadonnées de l'application et du paquet Velopack. Ce champ ne constitue pas une vérification d'identité : tant que les exécutables ne sont pas signés, Windows peut afficher « Éditeur inconnu ». Le nom affiché par Windows pour une signature valide provient de l'identité vérifiée dans le certificat. `ThomasTP` reste un pseudonyme de projet, pas l'identité à faire certifier.
+
+Velopack doit signer les exécutables de l'application **et** ses propres exécutables d'installation et de mise à jour pendant `vpk pack`. `scripts/package-windows.ps1` accepte deux méthodes exclusives :
+
+- `-SignParams '<paramètres signtool>'` pour un certificat ou service compatible avec SignTool ; utiliser des chemins absolus et l'horodatage SHA-256.
+- `-AzureTrustedSignFile <chemin-vers-metadata.json>` pour Microsoft Artifact Signing, après validation de l'identité, attribution du rôle de signataire et authentification Azure sur la machine de build.
+
+Quand une méthode de signature est fournie, le script vérifie que la signature Authenticode de l'installateur final est valide avant de produire les sommes de contrôle. Sans méthode, le paquet reste explicitement non signé. La CI ne possède actuellement ni identité de signature ni accès à un certificat : **les releases automatiques restent non signées** jusqu'à sa configuration et validation. Ne pas stocker de certificat, de mot de passe ou de jeton dans le dépôt, les arguments enregistrés par la CI ou une conversation.
+
+Pour une personne physique établie en Suisse, [Microsoft Artifact Signing Public Trust](https://learn.microsoft.com/en-us/azure/artifact-signing/quickstart) n'est actuellement pas disponible ; le service accepte en revanche les organisations suisses vérifiées. Une personne physique doit obtenir une solution de signature de code auprès d'une autorité de certification qui accepte son identité et fournit une clé protégée ou un service de signature. Les offres [« Individual Validated Code Signing » de SSL.com](https://www.ssl.com/fr/products/software-integrity/code-signing/iv/) et [« Standard Code Signing » de Certum](https://www.certum.eu/en/code-signing-certificates/) sont des pistes à confirmer auprès de l'émetteur pour une personne domiciliée en Suisse avant tout achat. L'identité figurant sur le certificat est déterminée par cette vérification, pas par `packAuthors`.
