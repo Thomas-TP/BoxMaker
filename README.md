@@ -66,6 +66,6 @@ Les mises à jour utilisent [les releases du dépôt GitHub](https://github.com/
 
 Le workflow GitHub vérifie et construit chaque push/PR. Un tag de version valide déclenche ensuite la publication de la release avec installateur, portable, fichiers Velopack et SHA-256. Voir [le guide de release](docs/RELEASING.md). Aucun compte externe n’est nécessaire pour concevoir une boîte localement.
 
-L'éditeur renseigné dans les métadonnées Windows est Thomas Prud'homme. Les exécutables publiés ne sont pas encore signés avec un certificat d'identité : Windows peut afficher « Éditeur inconnu ». La signature et le cycle réel installation → mise à jour restent à valider avant distribution publique. Voir [la procédure de publication](docs/RELEASING.md#éditeur-windows-et-signature).
+La prochaine version utilisera Thomas Prud'homme dans les métadonnées Windows. Les exécutables publiés ne sont pas encore signés avec un certificat d'identité : Windows peut afficher « Éditeur inconnu ». La signature et le cycle réel installation → mise à jour restent à valider avant distribution publique. Voir [la procédure de publication](docs/RELEASING.md#éditeur-windows-et-signature).
 
 Documentation : [intégration Rust Velopack](https://docs.velopack.io/getting-started/rust), [packaging](https://docs.velopack.io/packaging/overview).
