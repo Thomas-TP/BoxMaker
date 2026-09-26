@@ -132,6 +132,7 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
         printX += part.size[0] + 15;
       } else {
         mesh.position.fromArray(part.assembledOffset);
+        if (part.id === "seal") mesh.rotation.x = -Math.PI / 2;
         if (part.id === "lid" && mode === "open")
           mesh.position.y -=
             opening < 30

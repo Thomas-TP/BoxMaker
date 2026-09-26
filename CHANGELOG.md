@@ -6,6 +6,20 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.7.0] - 2026-09-27
+
+### Amélioré
+
+- Scellé redessiné en petit verrou vertical imprimé à plat, affleurant dans le coin arrière : suppression de l’oreille latérale de 8,5 mm et de l’allongement arrière de 14 mm.
+- Tête sacrificielle à rompre ; la tige retenue dans la coque n’empêche ensuite plus le couvercle de coulisser grâce à sa fente ouverte vers l’arrière.
+- Contrôle géométrique de l’enveloppe et des collisions du scellé avec la coque et le couvercle. Les très petites boîtes réservent seulement la largeur nécessaire pour éloigner le scellé du ressort.
+- Aperçu 3D montrant le verrou vertical assemblé et la même pièce à plat pour l’impression.
+- Projets v5 : les projets scellés antérieurs perdent leur ancienne pesée, car leur géométrie change ; les projets sans scellé conservent leurs réglages.
+
+### Limites
+
+- Enclenchement, force de rupture, résistance au transport et retrait du fragment restent à valider sur une impression réelle.
+
 ## [0.6.0] - 2026-09-26
 
 ### Ajouté

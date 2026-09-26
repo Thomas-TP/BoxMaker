@@ -1,5 +1,7 @@
 # Scellé entièrement imprimé — double ancrage et languette de rupture
 
+**Archive de la conception v0.6.0.** Cette agrafe latérale a été remplacée par le [verrou affleurant v0.7.0](SEALING-v0.7.md), qui ne déborde plus sur le côté. Ne pas utiliser ce document comme notice de la version actuelle.
+
 26 septembre 2026. Scellé intégré à Boxmaker v0.6.0, avec éprouvettes CAO antérieures. Contrainte : **aucune pièce achetée**, sans colle, vis ou aimant. La géométrie intégrée reste expérimentale et demande une impression d’essai.
 
 ## Solution retenue

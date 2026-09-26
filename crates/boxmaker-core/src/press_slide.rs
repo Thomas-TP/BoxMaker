@@ -1,6 +1,6 @@
-//! Two-piece sliding enclosure: load-bearing rails and a low-travel, unloaded
-//! cantilever catch. All dimensions are millimetres; this is a printable
-//! prototype, not a fatigue or shipping-strength certification.
+//! Sliding enclosure: load-bearing rails, an unloaded cantilever catch, and
+//! an optional flush printed seal. All dimensions are millimetres; this is a
+//! printable prototype, not a fatigue or shipping-strength certification.
 use crate::{Mesh, Params, mesh::RawPart, seal, spring};
 use manifold_csg::{CrossSection, JoinType, Manifold};
 use serde::Serialize;
@@ -57,30 +57,21 @@ pub(crate) fn layout(p: &Params) -> Layout {
     let requested = p.object.map(|v| v + 2. * (p.padding + p.object_clearance));
     let (spring, mut inner) = spring::choose(requested, p.clearance);
     if p.seal {
-        inner[0] = inner[0].max(spring.width + seal::MIN_INNER_WIDTH_OVER_SPRING);
+        // Keep the rear pin and its head clear of the cantilever on tiny boxes.
+        inner[0] = inner[0].max(seal::min_inner_width(spring.width, p.clearance));
     }
-    let rear = spring::BRIDGE
-        + 2.5
-        + 2. * p.clearance
-        + 0.3
-        + if p.seal { seal::REAR_EXTENSION } else { 0. };
+    let rear = spring::BRIDGE + 2.5 + 2. * p.clearance + 0.3;
     let headroom = spring.deflection(spring.length + 2.8) + 0.15;
     let stop = headroom;
     let lid_z = p.floor + RIB + inner[2] + headroom;
     let bridge_bottom =
         lid_z + spring.thickness(spring.length - spring::BRIDGE - p.clearance) + p.clearance;
-    let base_height = (bridge_bottom + 1.2).max(lid_z + spring.root_thickness + 0.5);
-    let h = (base_height.max(if p.seal {
-        lid_z + LID + seal::BOSS_ABOVE_LID
-    } else {
-        base_height
-    }) * 10_000.)
-        .ceil()
-        / 10_000.;
+    let h =
+        ((bridge_bottom + 1.2).max(lid_z + spring.root_thickness + 0.5) * 10_000.).ceil() / 10_000.;
     Layout {
         inner,
         outer: [
-            inner[0] + 2. * (p.wall + RIB) + if p.seal { seal::BODY_EAR } else { 0. },
+            inner[0] + 2. * (p.wall + RIB),
             inner[1] + 2. * p.wall + RIB + rear,
             h,
         ],
@@ -344,7 +335,7 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
     // 0.0001 mm is far below printing clearance and layer dimensions.
     let lid = Manifold::batch_union(&lid_adds);
     let (body, lid, seal_part) = if p.seal {
-        let (body, lid) = seal::add_sockets(body, lid, w, d, lid_z + LID, h);
+        let (body, lid) = seal::add_sockets(body, lid, w, d, lid_z, p.floor, p.wall);
         (body, lid, Some(seal::printed_seal()))
     } else {
         (body, lid, None)
@@ -366,6 +357,22 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
             .map_err(|e| format!("Géométrie du scellé invalide : {e}"))?;
         if solid.volume() <= 0. || solid.decompose().len() != 1 {
             return Err("Le scellé doit former un seul volume fermé.".into());
+        }
+        let positioned = seal::assembled_solid(solid, w, d, lid_z + LID, p.wall);
+        let bounds = positioned.bounding_box().ok_or("Scellé vide")?;
+        if (0..3).any(|axis| {
+            bounds.min()[axis] < -0.0001 || bounds.max()[axis] > layout.outer[axis] + 0.0001
+        }) {
+            return Err("Le scellé dépasse les dimensions extérieures de la boîte.".into());
+        }
+        for (name, other) in [("la boîte", &body), ("le couvercle", &lid)] {
+            let overlap = positioned.intersection(other);
+            if overlap.volume() > 0.0001 {
+                return Err(format!(
+                    "Le scellé entre en collision avec {name} ({:.3} mm³).",
+                    overlap.volume()
+                ));
+            }
         }
     }
     Ok(Assembly {
@@ -441,7 +448,7 @@ pub fn design(p: &Params) -> Result<DesignOutput, String> {
             "seal",
             "Scellé imprimé · usage unique",
             mesh(solid),
-            seal::assembled_offset(box_width, a.outer[1], a.mechanism.lid_z + LID),
+            seal::assembled_offset(box_width, a.outer[1], a.mechanism.lid_z + LID, p.wall),
         ));
     }
     Ok((a.inner, a.outer, a.object_offset, parts, a.mechanism))

@@ -180,7 +180,7 @@ export default function App() {
   async function saveProject() {
     try {
       const saved = await download(
-        JSON.stringify({ version: 4, params }, null, 2),
+        JSON.stringify({ version: 5, params }, null, 2),
         "ma-boite.boxmaker.json",
         "application/json",
       );
@@ -196,7 +196,7 @@ export default function App() {
     try {
       if (file.size > 32768) throw new Error("Fichier trop volumineux");
       const project = JSON.parse(await file.text());
-      if (![1, 2, 3, 4].includes(project.version) || !project.params)
+      if (![1, 2, 3, 4, 5].includes(project.version) || !project.params)
         throw new Error("Projet Boxmaker incompatible");
       const loaded = {
         ...project.params,
@@ -206,7 +206,9 @@ export default function App() {
         seal: project.params.seal ?? false,
       };
       const migrated = loaded.model === "press-slide" && project.version < 3;
-      if (migrated) loaded.measuredTotal = null;
+      const compactSeal =
+        loaded.model === "press-slide" && loaded.seal && project.version < 5;
+      if (migrated || compactSeal) loaded.measuredTotal = null;
       await engine<Design>("calculate", loaded);
       setParams(loaded);
       setMode("exploded");
@@ -214,7 +216,9 @@ export default function App() {
       setNotice(
         migrated
           ? "Projet adapté à la nouvelle fermeture et orienté automatiquement. Repesez l’envoi."
-          : "Projet chargé.",
+          : compactSeal
+            ? "Scellé compact actualisé. Repesez l’envoi avant expédition."
+            : "Projet chargé.",
       );
     } catch (e) {
       setNotice(`Ouverture impossible : ${String(e)}`);
@@ -493,7 +497,7 @@ export default function App() {
                 <span>
                   Scellé imprimé pour l’expédition
                   <small>
-                    Troisième pièce à usage unique · pose après fermeture
+                    Affleurant dans le coin arrière · pose après fermeture
                   </small>
                 </span>
                 <input
@@ -1099,9 +1103,9 @@ export default function App() {
             </li>
             <li>
               Testez le clic et le déverrouillage sans forcer, protégez l’objet,
-              puis posez le scellé imprimé si cette option est active. Pesez
-              l’envoi fermé. Le destinataire rompt la languette du scellé avant
-              d’appuyer et de faire glisser le couvercle.
+              puis insérez le scellé imprimé dans le coin arrière si cette
+              option est active. Pesez l’envoi fermé. Le destinataire rompt sa
+              tête avant d’appuyer et de faire glisser le couvercle.
             </li>
           </ol>
           <h3>Formats extérieurs · Suisse</h3>

@@ -1,6 +1,6 @@
 # Fermeture coulissante à pression — v0.3
 
-Deux pièces réutilisables : coque nervurée et couvercle coulissant. Les rails reprennent la retenue verticale ; une dent sur la languette bloque le retrait. Appuyer sur la zone striée à l’arrière, tirer de quelques millimètres, relâcher puis retirer le couvercle. Depuis v0.6.0, un [scellé imprimé facultatif](SEALING-CONCEPT.md) ajoute une troisième pièce à usage unique pour l’expédition ; le rompre avant d’utiliser la languette.
+Deux pièces réutilisables : coque nervurée et couvercle coulissant. Les rails reprennent la retenue verticale ; une dent sur la languette bloque le retrait. Appuyer sur la zone striée à l’arrière, tirer de quelques millimètres, relâcher puis retirer le couvercle. Depuis v0.7.0, un [scellé imprimé affleurant](SEALING-v0.7.md) peut ajouter une troisième pièce à usage unique pour l’expédition ; rompre sa tête avant d’utiliser la languette.
 
 ## Orientation et espace utile
 
@@ -64,4 +64,4 @@ Cette révision reste à imprimer. Le retour utilisateur sur l’impression pré
 3. Fermer sans forcer. Vérifier clic, retenue et ouverture ; si possible mesurer l’effort au centre de la zone striée. Ajuster le jeu si nécessaire.
 4. Répéter les ouvertures ; consigner fissures, blanchiment, jeu, effort et nombre de cycles, ainsi que filament et paramètres d’impression.
 5. Tester le format final avec son contenu et comparer la masse au calcul. Une protection supplémentaire ou des parois plus épaisses peuvent être nécessaires selon l’objet.
-6. Si l’option est activée, insérer le scellé imprimé dans les deux logements après fermeture, puis peser le colis fermé avant affranchissement.
+6. Si l’option est activée, insérer le verrou imprimé verticalement dans le coin arrière après fermeture, puis peser le colis fermé avant affranchissement.

@@ -274,7 +274,7 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
     }
     if p.model == "press-slide" {
         if p.seal {
-            warnings.push("Scellé imprimé expérimental : insérez-le après avoir chargé et fermé la boîte. Retirez sa languette avant d’appuyer puis de faire glisser le couvercle. Vérifiez l’enclenchement, la rupture et la tenue sur une impression réelle avant tout envoi.".into());
+            warnings.push("Scellé imprimé expérimental : insérez le petit verrou vertical dans le coin arrière après avoir chargé et fermé la boîte. Rompez sa tête avant d’appuyer puis de faire glisser le couvercle. Vérifiez l’enclenchement, la rupture et la tenue sur une impression réelle avant tout envoi.".into());
             warnings.push("Le scellé gêne l’ouverture discrète par la fermeture normale ; il ne garantit pas l’inviolabilité et peut être remplacé ou contourné en endommageant la boîte.".into());
         } else {
             warnings.push("Fermeture à pression : imprimez d’abord l’essai, vérifiez le clic et l’ouverture sans forcer. La durée de vie du ressort PLA et la résistance au transport restent à tester ; scellez l’envoi avec un adhésif.".into());

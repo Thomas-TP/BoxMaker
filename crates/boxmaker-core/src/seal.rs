@@ -1,66 +1,94 @@
-//! Optional, single-use printed bridge between the sliding lid and the body.
-//! Geometry is in millimetres. No insertion or break force is certified.
+//! Flush, single-use pin in the unused rear corner of the press-slide box.
+//! The pin prints flat, then stands vertically through a rear-open lid slot.
+//! Geometry is in millimetres; snap and break forces need physical validation.
 use manifold_csg::{CrossSection, Manifold};
 
-pub const BODY_EAR: f64 = 8.5;
-pub const REAR_EXTENSION: f64 = 14.;
-pub const MIN_INNER_WIDTH_OVER_SPRING: f64 = 16.5;
-pub const BOSS_ABOVE_LID: f64 = 4.2;
-const SEAL_THICKNESS: f64 = 1.6;
-const BRIDGE_THICKNESS: f64 = 0.8;
-const HOLE_GAP: f64 = 0.3;
+const HEAD_LEFT: f64 = 4.2;
+const HEAD_RIGHT: f64 = 2.6;
+const HEAD_HEIGHT: f64 = 0.8;
+const PIN_THICKNESS: f64 = 1.2;
+const BREAK_THICKNESS: f64 = 0.8;
+const SLOT_HALF_WIDTH: f64 = 1.6;
+const BORE_HALF_WIDTH: f64 = 1.15;
+const POCKET_HALF_WIDTH: f64 = 1.6;
+const HEAD_ABOVE_LID: f64 = 0.85;
+
+pub fn min_inner_width(spring_width: f64, gap: f64) -> f64 {
+    spring_width + 10.2 + 3. * gap
+}
+
+fn pin_x(box_width: f64, wall: f64) -> f64 {
+    box_width - wall - 4.1
+}
+
+fn pin_y(depth: f64, wall: f64) -> f64 {
+    depth - wall - 3.
+}
 
 fn cuboid(min: [f64; 3], max: [f64; 3]) -> Manifold {
     Manifold::cube(max[0] - min[0], max[1] - min[1], max[2] - min[2], false)
         .translate(min[0], min[1], min[2])
 }
 
-fn prong(center: f64) -> Vec<Manifold> {
-    let mut pieces = vec![cuboid(
-        [center - 4., 0., 0.],
-        [center + 4., 8., SEAL_THICKNESS],
-    )];
-    for side in [-1., 1.] {
-        let section = CrossSection::from_polygons(&[vec![
-            [1.3, 7.5],
-            [2.5, 7.5],
-            [2.5, 22.6],
-            [3.25, 22.6],
-            [2.5, 25.6],
-            [1.3, 25.6],
-        ]]);
-        let arm = section.extrude(SEAL_THICKNESS);
-        pieces.push(
-            (if side < 0. {
-                arm.mirror([1., 0., 0.])
-            } else {
-                arm
-            })
-            .translate(center, 0., 0.),
-        );
-    }
-    pieces
-}
-
 pub fn printed_seal() -> Manifold {
-    // The left anchor belongs to the lid, the right anchor to the body.
-    // Removing the middle bridge severs the only connection between them.
-    let mut pieces = prong(4.);
-    pieces.extend(prong(18.));
-    pieces.push(cuboid([9.4, -5.8, 0.], [12.6, 8., SEAL_THICKNESS]));
-    for y in [1., 3.5, 6.] {
-        pieces.push(cuboid([7.9, y, 0.], [9.5, y + 1., BRIDGE_THICKNESS]));
-        pieces.push(cuboid([12.5, y, 0.], [14.1, y + 1., BRIDGE_THICKNESS]));
-    }
-    for y in [-4.8, -3.3] {
-        pieces.push(cuboid([9.7, y, SEAL_THICKNESS - 0.1], [12.3, y + 0.6, 2.]));
+    // The two long arms bend in their printing plane during the one-time snap.
+    // Thin roots sever the head when its edge is lifted with a fingernail.
+    let mut pieces = vec![cuboid(
+        [-HEAD_LEFT, 0., 0.],
+        [HEAD_RIGHT, HEAD_HEIGHT, PIN_THICKNESS],
+    )];
+    let arm = CrossSection::from_polygons(&[vec![
+        [0.25, 1.45],
+        [0.95, 1.45],
+        [0.95, 9.5],
+        [1.35, 9.5],
+        [1.35, 9.9],
+        [0.95, 11.],
+        [0.25, 11.],
+    ]])
+    .extrude(PIN_THICKNESS);
+    for side in [-1., 1.] {
+        pieces.push(if side < 0. {
+            arm.mirror([1., 0., 0.])
+        } else {
+            arm.clone()
+        });
+        let (left, right) = if side < 0. {
+            (-0.95, -0.25)
+        } else {
+            (0.25, 0.95)
+        };
+        pieces.push(cuboid(
+            [left, HEAD_HEIGHT - 0.05, 0.],
+            [right, 1.5, BREAK_THICKNESS],
+        ));
     }
     Manifold::batch_union(&pieces)
 }
 
-pub fn assembled_offset(box_width: f64, depth: f64, lid_top: f64) -> [f64; 3] {
-    // Mesh::normalize removes the seal's local minimum y (-5.8 mm).
-    [box_width - 14., depth - 38.8, lid_top + 1.1]
+fn position(box_width: f64, depth: f64, lid_top: f64, wall: f64) -> [f64; 3] {
+    [
+        pin_x(box_width, wall),
+        pin_y(depth, wall) - PIN_THICKNESS / 2.,
+        lid_top + HEAD_ABOVE_LID,
+    ]
+}
+
+pub fn assembled_offset(box_width: f64, depth: f64, lid_top: f64, wall: f64) -> [f64; 3] {
+    let [x, y, z] = position(box_width, depth, lid_top, wall);
+    // Mesh::normalize removes the seal's local minimum x (-4.2 mm).
+    [x - HEAD_LEFT, y, z]
+}
+
+pub fn assembled_solid(
+    seal: &Manifold,
+    box_width: f64,
+    depth: f64,
+    lid_top: f64,
+    wall: f64,
+) -> Manifold {
+    let [x, y, z] = position(box_width, depth, lid_top, wall);
+    seal.rotate(-90., 0., 0.).translate(x, y, z)
 }
 
 pub fn add_sockets(
@@ -68,42 +96,35 @@ pub fn add_sockets(
     lid: Manifold,
     box_width: f64,
     depth: f64,
-    lid_top: f64,
-    height: f64,
+    lid_z: f64,
+    floor: f64,
+    wall: f64,
 ) -> (Manifold, Manifold) {
-    let mouth = depth - 25.;
-    let seal_z = lid_top + 1.1;
-    let low = seal_z - HOLE_GAP;
-    let high = seal_z + SEAL_THICKNESS + HOLE_GAP;
-    let body_x = box_width + 4.;
-    let lid_x = box_width - 10.;
+    let x = pin_x(box_width, wall);
+    let y = pin_y(depth, wall);
+    let bottom = (lid_z - 11.).max(floor + 0.4);
 
-    let body_boss = cuboid(
-        [box_width - 0.4, mouth, lid_top - 3.],
-        [box_width + BODY_EAR, depth - 4., height],
+    // A short tower joins the existing side and back walls. It sits behind the
+    // guaranteed object envelope and below the lid, so it adds no outer size.
+    let tower = cuboid(
+        [x - 3.1, y - 2., bottom],
+        [box_width - wall - 0.4, depth - wall + 0.1, lid_z - 0.3],
     );
-    let lid_boss = cuboid(
-        [lid_x - 4.5, mouth, lid_top - 0.1],
-        [lid_x + 4.5, depth - 4., height],
+    let bore = cuboid(
+        [x - BORE_HALF_WIDTH, y - 0.9, lid_z - 7.2],
+        [x + BORE_HALF_WIDTH, y + 0.9, lid_z + 0.5],
     );
-    let socket = |x: f64| {
-        Manifold::batch_union(&[
-            cuboid([x - 2.8, mouth - 0.2, low], [x + 2.8, mouth + 14.2, high]),
-            cuboid([x - 3.7, mouth + 14.2, low], [x + 3.7, mouth + 18.4, high]),
-        ])
-    };
-    let body = &(&body + &body_boss) - &socket(body_x);
-    let lid = &(&lid + &lid_boss) - &socket(lid_x);
+    let pocket = cuboid(
+        [x - POCKET_HALF_WIDTH, y - 0.9, bottom - 0.5],
+        [x + POCKET_HALF_WIDTH, y + 0.9, lid_z - 7.2],
+    );
+    let body = &(&body + &tower) - &Manifold::batch_union(&[bore, pocket]);
 
-    // These release windows face the closed box's interior. They are reachable
-    // only after opening, when the two broken anchor remnants can be removed.
-    let body_release = cuboid(
-        [box_width - 1.6, mouth + 15., low],
-        [body_x + 2.1, mouth + 18.4, high],
+    // This slot opens at the rear edge. When the head has been torn away, the
+    // shank remains in the body while the lid slides forward around it.
+    let lid_slot = cuboid(
+        [x - SLOT_HALF_WIDTH, y - 1.3, lid_z - 0.5],
+        [x + SLOT_HALF_WIDTH, depth + 1., lid_z + 4.],
     );
-    let lid_release = cuboid(
-        [lid_x - 3.2, mouth + 15., lid_top - 1.4],
-        [lid_x + 3.2, mouth + 18.4, low + 0.2],
-    );
-    (&body - &body_release, &lid - &lid_release)
+    (body, &lid - &lid_slot)
 }
