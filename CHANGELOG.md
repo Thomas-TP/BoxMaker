@@ -6,6 +6,18 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.6.0] - 2026-09-26
+
+### Ajouté
+
+- Scellé sacrificiel entièrement imprimable pour la boîte coulissante : deux ancrages à crochets et une languette centrale à rompre avant l’ouverture.
+- Logements intégrés à la boîte et au couvercle, troisième pièce dans l’aperçu et l’export 3MF complet, export individuel pour réimprimer le scellé.
+- Option activée pour les nouveaux projets ; les anciens projets conservent leur géométrie sans scellé. Format de projet v4.
+
+### Limites
+
+- Mécanisme expérimental à valider par impression : enclenchement, rupture visible, extraction des restes et résistance pendant le transport n’ont pas été mesurés physiquement.
+
 ## [0.5.0] - 2026-09-11
 
 ### Amélioré

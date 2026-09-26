@@ -1,5 +1,6 @@
 export interface Params {
   model: "press-slide" | "legacy";
+  seal: boolean;
   object: [number, number, number];
   objectWeight: number | null;
   padding: number;
@@ -72,6 +73,7 @@ export interface Design {
 }
 export const defaults: Params = {
   model: "press-slide",
+  seal: true,
   object: [100, 70, 30],
   objectWeight: 80,
   padding: 0,

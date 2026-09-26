@@ -4,10 +4,10 @@ async (page) => {
   const assert = (ok, text) => { if (!ok) throw new Error(text); };
   await page.getByRole('button',{name:'Réinitialiser les paramètres',exact:true}).click();
   await waitReady();
-  await page.getByRole('button',{name:'Exporter les 2 pièces',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Exporter les 3 pièces',exact:true}).waitFor();
   assert(await page.getByRole('combobox',{name:'Pièce',exact:true}).inputValue() === 'all', 'Complete export should be the default');
   const complete = page.waitForEvent('download');
-  await page.getByRole('button',{name:'Exporter les 2 pièces',exact:true}).click();
+  await page.getByRole('button',{name:'Exporter les 3 pièces',exact:true}).click();
   const completeFile = await complete;
   assert(completeFile.suggestedFilename() === 'boxmaker-complet-PLA.3mf', 'Complete export is a single 3MF');
   await completeFile.saveAs('output/playwright/complete.3mf');
@@ -26,7 +26,7 @@ async (page) => {
   await waitReady();
   assert(await page.getByRole('button',{name:'Exporter la boîte',exact:true}).isDisabled(),'Oversized P1S export should be blocked');
   await page.getByRole('combobox',{name:'Pièce',exact:true}).selectOption('all');
-  assert(await page.getByRole('button',{name:'Exporter les 2 pièces',exact:true}).isDisabled(), 'Complete export also checks the printer boundary');
+  assert(await page.getByRole('button',{name:'Exporter les 3 pièces',exact:true}).isDisabled(), 'Complete export also checks the printer boundary');
   await page.getByRole('combobox',{name:'Pièce',exact:true}).selectOption('body');
   await page.getByRole('button',{name:'Creality K2 260 × 260 × 260 mm',exact:true}).click();
   await page.getByText('Chaque pièce tient sur le plateau utile',{exact:true}).waitFor();

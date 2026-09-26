@@ -28,7 +28,7 @@ Le workflow `Windows · checks & releases` :
 4. Conserve les fichiers de build en artifacts pendant 14 jours.
 5. **Pour un tag seulement**, crée un brouillon de release, joint tous les fichiers et les notes, puis publie lorsque tout a réussi.
 
-Les versions `0.x` et celles avec suffixe sont marquées **préversions**. La source Velopack accepte les préversions pour cette phase de développement. Le téléchargement et le redémarrage restent demandés explicitement par l’utilisateur ; un projet est enregistré avant redémarrage.
+Les versions `0.x` et celles avec suffixe sont marquées **préversions**. La source Velopack accepte les préversions pour cette phase de développement. Le téléchargement et le redémarrage restent demandés explicitement par l’utilisateur ; il peut enregistrer le projet avant redémarrage ou installer directement en abandonnant les modifications non enregistrées.
 
 Une release déjà publiée n’est jamais écrasée automatiquement. En cas de correction après publication, augmenter la version. Si un upload échoue en laissant un brouillon, relancer le job permet de le compléter.
 

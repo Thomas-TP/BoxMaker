@@ -1,7 +1,7 @@
 //! Two-piece sliding enclosure: load-bearing rails and a low-travel, unloaded
 //! cantilever catch. All dimensions are millimetres; this is a printable
 //! prototype, not a fatigue or shipping-strength certification.
-use crate::{Mesh, Params, mesh::RawPart, spring};
+use crate::{Mesh, Params, mesh::RawPart, seal, spring};
 use manifold_csg::{CrossSection, JoinType, Manifold};
 use serde::Serialize;
 
@@ -55,19 +55,32 @@ pub(crate) struct Layout {
 
 pub(crate) fn layout(p: &Params) -> Layout {
     let requested = p.object.map(|v| v + 2. * (p.padding + p.object_clearance));
-    let (spring, inner) = spring::choose(requested, p.clearance);
-    let rear = spring::BRIDGE + 2.5 + 2. * p.clearance + 0.3;
+    let (spring, mut inner) = spring::choose(requested, p.clearance);
+    if p.seal {
+        inner[0] = inner[0].max(spring.width + seal::MIN_INNER_WIDTH_OVER_SPRING);
+    }
+    let rear = spring::BRIDGE
+        + 2.5
+        + 2. * p.clearance
+        + 0.3
+        + if p.seal { seal::REAR_EXTENSION } else { 0. };
     let headroom = spring.deflection(spring.length + 2.8) + 0.15;
     let stop = headroom;
     let lid_z = p.floor + RIB + inner[2] + headroom;
     let bridge_bottom =
         lid_z + spring.thickness(spring.length - spring::BRIDGE - p.clearance) + p.clearance;
-    let h =
-        ((bridge_bottom + 1.2).max(lid_z + spring.root_thickness + 0.5) * 10_000.).ceil() / 10_000.;
+    let base_height = (bridge_bottom + 1.2).max(lid_z + spring.root_thickness + 0.5);
+    let h = (base_height.max(if p.seal {
+        lid_z + LID + seal::BOSS_ABOVE_LID
+    } else {
+        base_height
+    }) * 10_000.)
+        .ceil()
+        / 10_000.;
     Layout {
         inner,
         outer: [
-            inner[0] + 2. * (p.wall + RIB),
+            inner[0] + 2. * (p.wall + RIB) + if p.seal { seal::BODY_EAR } else { 0. },
             inner[1] + 2. * p.wall + RIB + rear,
             h,
         ],
@@ -87,6 +100,7 @@ pub(crate) struct Assembly {
     pub mechanism: Mechanism,
     pub body: Manifold,
     pub lid: Manifold,
+    pub seal: Option<Manifold>,
 }
 
 fn cuboid(min: [f64; 3], max: [f64; 3]) -> Manifold {
@@ -136,7 +150,8 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
     let t = p.wall;
     let g = p.clearance;
     let front = t + RIB;
-    let [w, d, h] = layout.outer;
+    let [_, d, h] = layout.outer;
+    let w = inner[0] + 2. * (t + RIB);
     let lid_z = layout.lid_z;
     let roof_z = lid_z + LID + g;
     let slot_width = 0.8 + 2. * g;
@@ -327,8 +342,16 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
     // Boolean intersections can leave sub-micron edges. Remove them before
     // float32 STL / six-decimal 3MF conversion collapses adjacent vertices.
     // 0.0001 mm is far below printing clearance and layer dimensions.
+    let lid = Manifold::batch_union(&lid_adds);
+    let (body, lid, seal_part) = if p.seal {
+        let (body, lid) = seal::add_sockets(body, lid, w, d, lid_z + LID, h);
+        (body, lid, Some(seal::printed_seal()))
+    } else {
+        (body, lid, None)
+    };
     let body = printable(&body)?;
-    let lid = printable(&Manifold::batch_union(&lid_adds))?;
+    let lid = printable(&lid)?;
+    let seal_part = seal_part.as_ref().map(printable).transpose()?;
     for (name, solid) in [("boîte", &body), ("couvercle", &lid)] {
         solid
             .status()
@@ -337,9 +360,17 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
             return Err(format!("La pièce {name} doit former un seul volume fermé."));
         }
     }
+    if let Some(solid) = &seal_part {
+        solid
+            .status()
+            .map_err(|e| format!("Géométrie du scellé invalide : {e}"))?;
+        if solid.volume() <= 0. || solid.decompose().len() != 1 {
+            return Err("Le scellé doit former un seul volume fermé.".into());
+        }
+    }
     Ok(Assembly {
         inner,
-        outer: [w, d, h],
+        outer: layout.outer,
         object_offset: [
             t + RIB + (inner[0] - p.object[0]) / 2.,
             front + (inner[1] - p.object[1]) / 2.,
@@ -376,6 +407,7 @@ pub(crate) fn assembly(p: &Params) -> Result<Assembly, String> {
         },
         body,
         lid,
+        seal: seal_part,
     })
 }
 
@@ -399,16 +431,20 @@ type DesignOutput = ([f64; 3], [f64; 3], [f64; 3], Vec<RawPart>, Mechanism);
 pub fn design(p: &Params) -> Result<DesignOutput, String> {
     let a = assembly(p)?;
     let bounds = a.lid.bounding_box().ok_or("Couvercle vide")?;
-    Ok((
-        a.inner,
-        a.outer,
-        a.object_offset,
-        vec![
-            ("body", "Boîte nervurée", mesh(&a.body), [0.; 3]),
-            ("lid", "Couvercle à pression", mesh(&a.lid), bounds.min()),
-        ],
-        a.mechanism,
-    ))
+    let mut parts = vec![
+        ("body", "Boîte nervurée", mesh(&a.body), [0.; 3]),
+        ("lid", "Couvercle à pression", mesh(&a.lid), bounds.min()),
+    ];
+    if let Some(solid) = &a.seal {
+        let box_width = a.inner[0] + 2. * (p.wall + RIB);
+        parts.push((
+            "seal",
+            "Scellé imprimé · usage unique",
+            mesh(solid),
+            seal::assembled_offset(box_width, a.outer[1], a.mechanism.lid_z + LID),
+        ));
+    }
+    Ok((a.inner, a.outer, a.object_offset, parts, a.mechanism))
 }
 
 #[cfg(test)]

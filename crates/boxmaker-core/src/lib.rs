@@ -2,6 +2,7 @@ mod export;
 mod mesh;
 mod postal;
 mod press_slide;
+mod seal;
 mod spring;
 
 pub use mesh::Mesh;
@@ -13,6 +14,8 @@ use serde::{Deserialize, Serialize};
 pub struct Params {
     #[serde(default = "legacy_model")]
     pub model: String,
+    #[serde(default)]
+    pub seal: bool,
     pub object: [f64; 3],
     pub object_weight: Option<f64>,
     pub padding: f64,
@@ -40,6 +43,7 @@ impl Default for Params {
     fn default() -> Self {
         Self {
             model: "press-slide".into(),
+            seal: false,
             object: [100., 70., 30.],
             object_weight: Some(80.),
             padding: 0.,
@@ -159,6 +163,9 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
     if p.model != "press-slide" && p.model != "legacy" {
         return Err("Modèle de boîte inconnu".into());
     }
+    if p.seal && p.model != "press-slide" {
+        return Err("Le scellé imprimé nécessite le modèle coulissant à pression.".into());
+    }
     range(
         p.floor,
         if p.model == "legacy" { 1.2 } else { 0.8 },
@@ -266,7 +273,12 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
         warnings.push("P1S : contrôlez aussi les zones exclues et la ligne de purge du profil Bambu Studio ; la marge rectangulaire ne les modélise pas.".into());
     }
     if p.model == "press-slide" {
-        warnings.push("Fermeture à pression : imprimez d’abord l’essai, vérifiez le clic et l’ouverture sans forcer. La durée de vie du ressort PLA et la résistance au transport restent à tester ; scellez l’envoi avec un adhésif.".into());
+        if p.seal {
+            warnings.push("Scellé imprimé expérimental : insérez-le après avoir chargé et fermé la boîte. Retirez sa languette avant d’appuyer puis de faire glisser le couvercle. Vérifiez l’enclenchement, la rupture et la tenue sur une impression réelle avant tout envoi.".into());
+            warnings.push("Le scellé gêne l’ouverture discrète par la fermeture normale ; il ne garantit pas l’inviolabilité et peut être remplacé ou contourné en endommageant la boîte.".into());
+        } else {
+            warnings.push("Fermeture à pression : imprimez d’abord l’essai, vérifiez le clic et l’ouverture sans forcer. La durée de vie du ressort PLA et la résistance au transport restent à tester ; scellez l’envoi avec un adhésif.".into());
+        }
         warnings.push("Boîte : fond posé au plateau. Couvercle : face lisse dessous, nervures et bouton dessus. Contrôlez le petit pont du verrou et les lèvres des rails dans le slicer.".into());
         if inner[0] > p.object[0] + 2. * (p.padding + p.object_clearance) + 0.01
             || inner[1] > p.object[1] + 2. * (p.padding + p.object_clearance) + 0.01

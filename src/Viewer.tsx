@@ -73,6 +73,9 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     scene.add(model);
     let printX = 0;
     for (const [index, part] of design.parts.entries()) {
+      // The opening animation represents the state after the sacrificial seal
+      // has been removed. It cannot move with the still-connected anchors.
+      if (mode === "open" && part.id === "seal") continue;
       const vertices = part.mesh.vertices.map((v) => [...v]);
       const mechanism = design.mechanism;
       if (part.id === "lid" && mode === "open" && mechanism) {
@@ -141,6 +144,8 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
           if (part.id === "lid")
             mesh.position.z += Math.max(24, design.outer[2] * 0.65);
           if (part.id === "key")
+            mesh.position.z += Math.max(50, design.outer[2] * 1.2);
+          if (part.id === "seal")
             mesh.position.z += Math.max(50, design.outer[2] * 1.2);
         }
       }

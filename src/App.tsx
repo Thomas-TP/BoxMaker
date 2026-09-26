@@ -113,6 +113,7 @@ export default function App() {
         "floor",
         "clearance",
         "model",
+        "seal",
         "printer",
         "plateMargin",
       ].includes(key)
@@ -179,7 +180,7 @@ export default function App() {
   async function saveProject() {
     try {
       const saved = await download(
-        JSON.stringify({ version: 3, params }, null, 2),
+        JSON.stringify({ version: 4, params }, null, 2),
         "ma-boite.boxmaker.json",
         "application/json",
       );
@@ -195,13 +196,14 @@ export default function App() {
     try {
       if (file.size > 32768) throw new Error("Fichier trop volumineux");
       const project = JSON.parse(await file.text());
-      if (![1, 2, 3].includes(project.version) || !project.params)
+      if (![1, 2, 3, 4].includes(project.version) || !project.params)
         throw new Error("Projet Boxmaker incompatible");
       const loaded = {
         ...project.params,
         objectClearance:
           project.params.objectClearance ?? defaults.objectClearance,
         model: project.params.model ?? "legacy",
+        seal: project.params.seal ?? false,
       };
       const migrated = loaded.model === "press-slide" && project.version < 3;
       if (migrated) loaded.measuredTotal = null;
@@ -450,7 +452,9 @@ export default function App() {
               <span className="step">03</span>
               <h3>La boîte</h3>
               <span className="small-badge">
-                {params.model === "press-slide" ? "2 pièces" : "3 pièces"}
+                {params.model === "press-slide" && !params.seal
+                  ? "2 pièces"
+                  : "3 pièces"}
               </span>
             </div>
             <div className="field-grid two">
@@ -477,11 +481,29 @@ export default function App() {
                 <strong>Couvercle coulissant</strong>
                 <small>
                   {params.model === "press-slide"
-                    ? "Appuyer, puis tirer · verrou intégré"
+                    ? params.seal
+                      ? "Scellé à rompre, puis appuyer et tirer"
+                      : "Appuyer, puis tirer · verrou intégré"
                     : "Ancien modèle · clavette séparée"}
                 </small>
               </span>
             </div>
+            {params.model === "press-slide" && (
+              <label className="switch-row">
+                <span>
+                  Scellé imprimé pour l’expédition
+                  <small>
+                    Troisième pièce à usage unique · pose après fermeture
+                  </small>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={params.seal}
+                  onChange={(e) => set("seal", e.target.checked)}
+                />
+                <span className="switch" />
+              </label>
+            )}
             <button
               type="button"
               className="advanced-toggle"
@@ -502,6 +524,7 @@ export default function App() {
                       setParams((p) => ({
                         ...p,
                         model,
+                        seal: model === "legacy" ? false : p.seal,
                         wall: model === "legacy" ? 1.6 : 1.2,
                         floor: model === "legacy" ? 2 : 0.8,
                         measuredTotal: null,
@@ -812,10 +835,15 @@ export default function App() {
                   <option value="all">
                     {params.model === "legacy"
                       ? "Toutes les pièces (3)"
-                      : "Boîte + couvercle"}
+                      : params.seal
+                        ? "Boîte + couvercle + scellé"
+                        : "Boîte + couvercle"}
                   </option>
                   <option value="body">Boîte</option>
                   <option value="lid">Couvercle</option>
+                  {params.model === "press-slide" && params.seal && (
+                    <option value="seal">Scellé à réimprimer</option>
+                  )}
                   {params.model === "legacy" && (
                     <option value="key">Clavette</option>
                   )}
@@ -852,12 +880,16 @@ export default function App() {
               {part === "all"
                 ? params.model === "legacy"
                   ? "les 3 pièces"
-                  : "les 2 pièces"
+                  : params.seal
+                    ? "les 3 pièces"
+                    : "les 2 pièces"
                 : part === "body"
                   ? "la boîte"
                   : part === "lid"
                     ? "le couvercle"
-                    : "la clavette"}
+                    : part === "seal"
+                      ? "le scellé"
+                      : "la clavette"}
               <ArrowRight size={16} />
             </button>
             <p>
@@ -1067,7 +1099,9 @@ export default function App() {
             </li>
             <li>
               Testez le clic et le déverrouillage sans forcer, protégez l’objet,
-              scellez le couvercle avec un adhésif et pesez l’envoi fermé.
+              puis posez le scellé imprimé si cette option est active. Pesez
+              l’envoi fermé. Le destinataire rompt la languette du scellé avant
+              d’appuyer et de faire glisser le couvercle.
             </li>
           </ol>
           <h3>Formats extérieurs · Suisse</h3>
