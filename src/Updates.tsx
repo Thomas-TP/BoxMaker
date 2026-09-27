@@ -8,7 +8,7 @@ import {
 import { useState } from "react";
 
 interface UpdateView {
-  state: "unavailable" | "available" | "current" | "empty";
+  state: "unavailable" | "available" | "current" | "empty" | "store";
   message: string;
   version: string | null;
   notes: string | null;
@@ -84,7 +84,11 @@ export function Updates({
         <span className="version">Windows</span>
       </div>
       <p className="update-source">
-        <span>Versions publiées par Swiss3Design</span>
+        <span>
+          {result?.state === "store"
+            ? "Mises à jour via Microsoft Store"
+            : "Versions publiées par Thomas Prud'homme"}
+        </span>
         <a
           href="https://github.com/Thomas-TP/BoxMaker/releases"
           target="_blank"
@@ -117,6 +121,14 @@ export function Updates({
           <summary>Notes de cette version</summary>
           <pre>{result.notes}</pre>
         </details>
+      )}
+      {result?.state === "store" && (
+        <a
+          className="outlined update-check"
+          href="ms-windows-store://downloadsandupdates"
+        >
+          Ouvrir la bibliothèque Microsoft Store <ArrowUpRight size={14} />
+        </a>
       )}
       {result?.state === "available" && (
         <div className="update-actions">

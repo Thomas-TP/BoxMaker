@@ -5,6 +5,16 @@ use velopack::{UpdateCheck, UpdateInfo, UpdateManager, sources::GithubSource};
 
 pub const REPOSITORY: &str = "https://github.com/Thomas-TP/BoxMaker";
 
+fn is_store_package() -> bool {
+    std::env::current_exe()
+        .ok()
+        .and_then(|path| {
+            path.parent()
+                .map(|parent| parent.join("boxmaker-store.txt"))
+        })
+        .is_some_and(|marker| marker.is_file())
+}
+
 #[derive(Default)]
 pub struct Updates(pub Mutex<Session>);
 
@@ -32,6 +42,14 @@ fn manager() -> Result<UpdateManager, String> {
 #[tauri::command]
 pub async fn check_update(app: tauri::AppHandle) -> Result<UpdateView, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        if is_store_package() {
+            return Ok(UpdateView {
+                state: "store",
+                message: "Cette installation reçoit ses mises à jour dans la bibliothèque du Microsoft Store.".into(),
+                version: None,
+                notes: None,
+            });
+        }
         let updater = match manager() {
             Ok(value) => value,
             Err(message) => {
@@ -85,6 +103,9 @@ pub async fn check_update(app: tauri::AppHandle) -> Result<UpdateView, String> {
 #[tauri::command]
 pub async fn download_update(app: tauri::AppHandle) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
+        if is_store_package() {
+            return Err("Mettez Boxmaker à jour depuis le Microsoft Store.".into());
+        }
         let shared = app.state::<Updates>();
         let mut session = shared.0.lock().map_err(|e| e.to_string())?;
         let info = session
@@ -104,6 +125,9 @@ pub async fn download_update(app: tauri::AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
+        if is_store_package() {
+            return Err("Mettez Boxmaker à jour depuis le Microsoft Store.".into());
+        }
         let shared = app.state::<Updates>();
         let session = shared.0.lock().map_err(|e| e.to_string())?;
         if !session.downloaded {

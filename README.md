@@ -6,7 +6,7 @@ Application Windows locale pour concevoir une boîte d’expédition imprimée e
 
 ## Utilisation
 
-L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmaker-win-Setup.exe`. Un ZIP portable est également produit. Le binaire autonome est `target/release/boxmaker.exe` et nécessite le runtime Microsoft WebView2.
+L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmaker-win-Setup.exe`. **Cet EXE GitHub n’est pas signé** et Windows peut afficher « Éditeur inconnu ». Un ZIP portable est également produit. Le MSIX joint aux releases est un paquet **non signé destiné à Partner Center**, pas le téléchargement à installer. Après certification, la version installable et signée sera distribuée par la [fiche Microsoft Store Boxmaker](https://apps.microsoft.com/detail/9MX7QLK05FJP). Le binaire autonome est `target/release/boxmaker.exe` et nécessite le runtime Microsoft WebView2.
 
 1. Saisir les trois dimensions en **mm**, dans n’importe quel ordre : le modèle coulissant choisit automatiquement une orientation imprimable et basse. Renseigner le poids en **g**. Le jeu d’insertion vaut 0,3 mm par face ; ajouter séparément le calage nécessaire.
 2. Choisir **Bambu Lab P1S (256³ mm)** ou **Creality K2 classique (260³ mm)**.
@@ -35,6 +35,7 @@ bun run release:check   # cohérence des versions, changelog et notes
 bun run desktop:build   # ressources web embarquées, binaire Windows
 dotnet tool restore     # CLI Velopack verrouillée
 bun run package:windows -- -SkipBuild  # installateur et portable Velopack
+bun run package:msix -- -SkipBuild     # MSIX non signé pour Partner Center
 ```
 
 Ne pas lancer `dev` et `desktop` simultanément : le port 1420 est partagé.
@@ -64,8 +65,8 @@ L’application initialise `VelopackApp` avant toute initialisation de l’inter
 
 Les mises à jour utilisent [les releases du dépôt GitHub](https://github.com/Thomas-TP/BoxMaker/releases), sans identifiants embarqués. Le bouton « Mises à jour » dans la barre d’outils permet de vérifier, lire les notes puis télécharger une version. « Installer et redémarrer » fonctionne sans enregistrer le projet ; une seconde action permet d’enregistrer puis d’installer. Les modifications non enregistrées sont perdues au redémarrage. Aucune vérification réseau, aucun téléchargement et aucun redémarrage ne sont déclenchés automatiquement au lancement. Les préversions sont incluses pendant la phase `0.x`.
 
-Le workflow GitHub vérifie et construit chaque push/PR. Un tag de version valide déclenche ensuite la publication de la release avec installateur, portable, fichiers Velopack et SHA-256. Voir [le guide de release](docs/RELEASING.md). Aucun compte externe n’est nécessaire pour concevoir une boîte localement.
+Le workflow GitHub vérifie et construit chaque push/PR. Un tag de version valide déclenche ensuite la publication de la release avec installateur, portable, fichiers Velopack, MSIX de soumission et SHA-256. Voir [le guide de release](docs/RELEASING.md). Aucun compte externe n’est nécessaire pour concevoir une boîte localement.
 
-La prochaine version utilisera Thomas Prud'homme dans les métadonnées Windows. Les exécutables publiés ne sont pas encore signés avec un certificat d'identité : Windows peut afficher « Éditeur inconnu ». La signature et le cycle réel installation → mise à jour restent à valider avant distribution publique. Voir [la procédure de publication](docs/RELEASING.md#éditeur-windows-et-signature).
+Thomas Prud'homme figure dans les métadonnées de l’EXE Windows, sans que cela constitue une signature. L’identité du MSIX correspond obligatoirement aux valeurs Partner Center. Une demande de renommage du compte vers « ThomasTP » est en cours de vérification ; l’identité de Boxmaker indique encore « Parkour Pixels ». La signature et le cycle réel installation → mise à jour restent à valider avant distribution publique. Voir [la procédure de publication](docs/RELEASING.md#éditeur-windows-et-signature) et la [confidentialité](docs/PRIVACY.md).
 
 Documentation : [intégration Rust Velopack](https://docs.velopack.io/getting-started/rust), [packaging](https://docs.velopack.io/packaging/overview).

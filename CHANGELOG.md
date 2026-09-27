@@ -6,6 +6,18 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.8.0] - 2026-09-27
+
+### Ajouté
+
+- Paquet MSIX pour soumission à Microsoft Store, avec l’identité attribuée à Boxmaker dans Partner Center.
+- Fiche Store en français suisse, gratuite et accessible uniquement par lien direct.
+- Canal de mise à jour adapté à la provenance de l’installation : GitHub pour Velopack, Microsoft Store pour le MSIX.
+
+### Précisé
+
+- L’EXE téléchargé sur GitHub n’est pas signé ; le MSIX joint à la release est un paquet de soumission non signé. Seul le paquet distribué par Microsoft Store sera signé par Microsoft après certification.
+
 ## [0.7.0] - 2026-09-27
 
 ### Amélioré

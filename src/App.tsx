@@ -307,7 +307,7 @@ export default function App() {
         <div>
           <div className="eyebrow">VOTRE ATELIER D’EMBALLAGE</div>
           <h1>Votre boîte, sur mesure.</h1>
-          <p>Vos dimensions. Deux pièces. Prêt à imprimer.</p>
+          <p>Vos dimensions. Trois pièces dans un seul export 3MF.</p>
         </div>
         <div className="swiss-label">
           <span className="swiss-cross">✚</span> Expédition en Suisse

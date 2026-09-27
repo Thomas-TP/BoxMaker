@@ -1,7 +1,7 @@
 {
   "name": "swiss3design-boxmaker",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "packageManager": "bun@1.3.11",
   "scripts": {
@@ -13,7 +13,8 @@
     "tauri": "tauri",
     "desktop": "tauri dev",
     "desktop:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-desktop.ps1",
-    "package:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-windows.ps1"
+    "package:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-windows.ps1",
+    "package:msix": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-msix.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

@@ -53,6 +53,8 @@ jobs:
         run: bun run desktop:build
       - name: Create Velopack packages and checksums
         run: bun run package:windows -- -SkipBuild
+      - name: Create unsigned MSIX for Microsoft Store submission
+        run: bun run package:msix -- -SkipBuild
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: boxmaker-windows-x64
