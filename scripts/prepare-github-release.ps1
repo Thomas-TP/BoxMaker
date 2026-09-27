@@ -19,10 +19,7 @@ $names = if ($Architecture -eq 'arm64') {
     @(
         'assets.win-arm64.json',
         'RELEASES-win-arm64',
-        'releases.win-arm64.json',
-        "Swiss3Design.Boxmaker.Arm64-$version-full.nupkg",
-        'Swiss3Design.Boxmaker.Arm64-win-arm64-Portable.zip',
-        'Swiss3Design.Boxmaker.Arm64-win-arm64-Setup.exe'
+        'releases.win-arm64.json'
     )
 } else {
     @(
@@ -38,6 +35,14 @@ foreach ($name in $names) {
     $file = Join-Path $source $name
     if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Fichier de release absent : $name" }
     Copy-Item -LiteralPath $file -Destination $output
+}
+if ($Architecture -eq 'arm64') {
+    foreach ($suffix in @('full.nupkg', 'Portable.zip', 'Setup.exe')) {
+        $matches = @(Get-ChildItem -LiteralPath $source -Filter 'Swiss3Design.Boxmaker.Arm64*' -File |
+            Where-Object { $_.Name.EndsWith($suffix, [StringComparison]::OrdinalIgnoreCase) })
+        if ($matches.Count -ne 1) { throw "Un seul paquet ARM64 attendu pour $suffix ; trouvé : $($matches.Count)." }
+        Copy-Item -LiteralPath $matches[0].FullName -Destination $output
+    }
 }
 
 & (Join-Path $PSScriptRoot 'checksums.ps1') -Directory $output

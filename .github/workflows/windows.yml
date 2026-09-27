@@ -116,6 +116,7 @@ jobs:
       - name: Prepare public ARM64 artifacts
         shell: pwsh
         run: |
+          Get-ChildItem -LiteralPath artifacts/releases -File | Select-Object -ExpandProperty Name
           & ./scripts/prepare-github-release.ps1 -SourceDir artifacts/releases -OutputDir artifacts/public-release-arm64 -Architecture arm64
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
