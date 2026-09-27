@@ -2,11 +2,11 @@
 
 Application Windows locale pour concevoir une boîte d’expédition imprimée en PLA, visualiser ses pièces et comparer les tarifs de la Poste suisse. La fermeture coulissante peut recevoir un scellé imprimé à usage unique ; le modèle à clavette reste disponible.
 
-[Installer depuis le Microsoft Store](https://apps.microsoft.com/detail/9MX7QLK05FJP) · [Télécharger la version GitHub](https://github.com/Thomas-TP/BoxMaker/releases) · [Notes de version](CHANGELOG.md) · [Compilation et releases](https://github.com/Thomas-TP/BoxMaker/actions)
+[Installer directement via Microsoft](https://apps.microsoft.com/detail/9MX7QLK05FJP?mode=direct) · [Voir la fiche Microsoft Store](https://apps.microsoft.com/detail/9MX7QLK05FJP) · [Télécharger la version GitHub](https://github.com/Thomas-TP/BoxMaker/releases) · [Notes de version](CHANGELOG.md) · [Compilation et releases](https://github.com/Thomas-TP/BoxMaker/actions)
 
 ## Utilisation
 
-La version installable signée est disponible sur la [fiche Microsoft Store Boxmaker](https://apps.microsoft.com/detail/9MX7QLK05FJP), sous l’éditeur ThomasTP. L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmaker-win-Setup.exe`. **Cet EXE GitHub n’est pas signé** et Windows peut afficher « Éditeur inconnu ». Un ZIP portable est également produit. Le MSIX non signé sert à la soumission Partner Center et n’est pas téléversé sur GitHub, y compris dans les artefacts Actions. Le binaire autonome est `target/release/boxmaker.exe` et nécessite le runtime Microsoft WebView2.
+La version installable signée est disponible sur la [fiche Microsoft Store Boxmaker](https://apps.microsoft.com/detail/9MX7QLK05FJP), sous l’éditeur ThomasTP. Le [lien d’installation directe Microsoft](https://apps.microsoft.com/detail/9MX7QLK05FJP?mode=direct) télécharge un petit installateur Web signé par Microsoft, qui récupère ensuite l’application depuis le Store ; ce fichier n’est pas le MSIX complet. L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmaker-win-Setup.exe`. **Cet EXE GitHub n’est pas signé** et Windows peut afficher « Éditeur inconnu ». Un ZIP portable est également produit. Le MSIX non signé sert à la soumission Partner Center et n’est pas téléversé sur GitHub, y compris dans les artefacts Actions. Le binaire autonome est `target/release/boxmaker.exe` et nécessite le runtime Microsoft WebView2.
 
 1. Saisir les trois dimensions en **mm**, dans n’importe quel ordre : le modèle coulissant choisit automatiquement une orientation imprimable et basse. Renseigner le poids en **g**. Le jeu d’insertion vaut 0,3 mm par face ; ajouter séparément le calage nécessaire.
 2. Choisir **Bambu Lab P1S (256³ mm)** ou **Creality K2 classique (260³ mm)**.
