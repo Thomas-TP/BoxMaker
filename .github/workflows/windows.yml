@@ -88,6 +88,10 @@ jobs:
       - name: Check macOS geometry engine
         run: cargo test -p boxmaker-core --locked
       - name: Build universal DMG with ad hoc signature
+        env:
+          # manifold-csg-sys invokes CMake directly; without this, its native
+          # libraries use the Intel runner architecture even for Rust arm64.
+          CMAKE_OSX_ARCHITECTURES: arm64;x86_64
         run: bunx tauri build --config src-tauri/tauri.macos.conf.json --target universal-apple-darwin --bundles dmg
       - name: Verify bundle and disk image
         shell: bash
