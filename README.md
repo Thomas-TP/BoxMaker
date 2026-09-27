@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <strong>Windows et macOS</strong> · Impression 3D en PLA · Expédition en Suisse
+  <strong>Windows x64 et ARM64 · macOS</strong> · Impression 3D en PLA · Expédition en Suisse
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 <p align="center">
   <a href="https://apps.microsoft.com/detail/9MX7QLK05FJP">Voir la fiche Store</a>
   ·
-  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.1">Windows et Mac : autres téléchargements</a>
+  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.2">Windows et Mac : autres téléchargements</a>
   ·
   <a href="docs/UTILISATION.md">Guide d’utilisation</a>
 </p>
@@ -60,7 +60,7 @@
 
 Le **badge Microsoft Store** en haut de cette page télécharge l’installateur Web officiel de Boxmaker. Il est signé par Microsoft, nécessite Internet et installe l’application depuis le Store. Les mises à jour de cette version passent par le Store.
 
-La [release GitHub v0.8.1](https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.1) propose également cet installateur Web, un ZIP portable, un installateur Windows classique et un **DMG universel pour Mac Intel et Apple Silicon**. L’installateur Windows classique n’est pas signé : Windows peut afficher « Éditeur inconnu ».
+La [release GitHub v0.8.2](https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.2) propose également cet installateur Web, des installateurs et ZIP portables pour **Windows x64 et ARM64**, ainsi qu’un **DMG universel pour Mac Intel et Apple Silicon**. Choisissez ARM64 pour un PC Windows à processeur ARM. Les installateurs Windows classiques ne sont pas signés : Windows peut afficher « Éditeur inconnu ».
 
 **Mac : préversion non testée en conditions réelles.** Le DMG est gratuit, signé localement sans certificat Apple et non notarisé. Après l’avoir glissé dans Applications, macOS peut demander d’autoriser sa première ouverture dans **Réglages Système → Confidentialité et sécurité → Ouvrir quand même**. Les mises à jour Mac se téléchargent pour l’instant depuis les releases GitHub.
 

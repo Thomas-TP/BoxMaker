@@ -1,6 +1,7 @@
 param(
     [string]$SourceDir = 'artifacts/releases',
-    [string]$OutputDir = 'artifacts/public-release'
+    [string]$OutputDir = 'artifacts/public-release',
+    [ValidateSet('x64', 'arm64')][string]$Architecture = 'x64'
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -14,14 +15,25 @@ if (@(Get-ChildItem -LiteralPath $output -File).Count -ne 0) {
     throw "Le dossier de publication doit être vide : $output"
 }
 
-$names = @(
-    'assets.win.json',
-    'RELEASES',
-    'releases.win.json',
-    "Swiss3Design.Boxmaker-$version-full.nupkg",
-    'Swiss3Design.Boxmaker-win-Portable.zip',
-    'Swiss3Design.Boxmaker-win-Setup.exe'
-)
+$names = if ($Architecture -eq 'arm64') {
+    @(
+        'assets.win-arm64.json',
+        'RELEASES-win-arm64',
+        'releases.win-arm64.json',
+        "Swiss3Design.Boxmaker.Arm64-$version-full.nupkg",
+        'Swiss3Design.Boxmaker.Arm64-win-arm64-Portable.zip',
+        'Swiss3Design.Boxmaker.Arm64-win-arm64-Setup.exe'
+    )
+} else {
+    @(
+        'assets.win.json',
+        'RELEASES',
+        'releases.win.json',
+        "Swiss3Design.Boxmaker-$version-full.nupkg",
+        'Swiss3Design.Boxmaker-win-Portable.zip',
+        'Swiss3Design.Boxmaker-win-Setup.exe'
+    )
+}
 foreach ($name in $names) {
     $file = Join-Path $source $name
     if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Fichier de release absent : $name" }

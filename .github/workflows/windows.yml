@@ -65,6 +65,70 @@ jobs:
           path: artifacts/public-release/*
           if-no-files-found: error
           retention-days: 14
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: boxmaker-store-submission-x64
+          path: artifacts/releases/*-x64-Store-submission-UNSIGNED.msix
+          if-no-files-found: error
+          retention-days: 14
+
+  windows_arm64:
+    name: Build Windows ARM64 and Store package
+    runs-on: windows-11-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: .bun-version
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install the tested Rust toolchain
+        shell: pwsh
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rustup default 1.98.0
+          rustup target add aarch64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Restore locked dependencies
+        shell: pwsh
+        run: |
+          bun install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet tool restore
+      - name: Build the native ARM64 desktop application
+        run: bun run desktop:build
+      - name: Verify ARM64 executable
+        shell: pwsh
+        run: |
+          $exe = [IO.File]::ReadAllBytes('target/release/boxmaker.exe')
+          $pe = [BitConverter]::ToInt32($exe, 0x3c)
+          $machine = [BitConverter]::ToUInt16($exe, $pe + 4)
+          if ($machine -ne 0xaa64) { throw "Expected ARM64 PE machine 0xAA64, got 0x$($machine.ToString('X4'))" }
+      - name: Create ARM64 Velopack packages
+        run: bun run package:windows -- -SkipBuild -Architecture arm64
+      - name: Create unsigned ARM64 MSIX for Microsoft Store
+        run: bun run package:msix -- -SkipBuild -Architecture arm64
+      - name: Prepare public ARM64 artifacts
+        shell: pwsh
+        run: |
+          & ./scripts/prepare-github-release.ps1 -SourceDir artifacts/releases -OutputDir artifacts/public-release-arm64 -Architecture arm64
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: boxmaker-windows-arm64
+          path: artifacts/public-release-arm64/*
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: boxmaker-store-submission-arm64
+          path: artifacts/releases/*-arm64-Store-submission-UNSIGNED.msix
+          if-no-files-found: error
+          retention-days: 14
 
   macos:
     name: Build macOS universal DMG (untested)
@@ -122,7 +186,7 @@ jobs:
   release:
     name: Publish the tagged release
     if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
-    needs: [build, macos]
+    needs: [build, windows_arm64, macos]
     runs-on: windows-2025
     timeout-minutes: 15
     permissions:
@@ -138,6 +202,10 @@ jobs:
         with:
           name: boxmaker-windows-x64
           path: artifacts/public-release
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: boxmaker-windows-arm64
+          path: artifacts/public-release-arm64
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: boxmaker-macos-universal-untested
@@ -164,6 +232,10 @@ jobs:
           if ($existing) { $arguments += '--merge' }
           dotnet tool run vpk -- @arguments
           if ($LASTEXITCODE -ne 0) { throw 'Velopack upload failed.' }
+          $armArguments = @('upload', 'github', '--repoUrl', "https://github.com/$env:GH_REPO", '--token', $env:GH_TOKEN, '--outputDir', 'artifacts/public-release-arm64', '--channel', 'win-arm64', '--tag', $env:RELEASE_TAG, '--targetCommitish', $env:RELEASE_COMMIT, '--releaseName', "Boxmaker $env:RELEASE_TAG", '--merge')
+          if ($preview) { $armArguments += '--pre' }
+          dotnet tool run vpk -- @armArguments
+          if ($LASTEXITCODE -ne 0) { throw 'Velopack ARM64 upload failed.' }
           $storeInstaller = Join-Path (Resolve-Path artifacts/public-release) 'Boxmaker-Microsoft-Store-Web-Installer.exe'
           Invoke-WebRequest -Uri 'https://get.microsoft.com/installer/download/9MX7QLK05FJP' -OutFile $storeInstaller
           $signature = Get-AuthenticodeSignature -LiteralPath $storeInstaller
@@ -173,6 +245,7 @@ jobs:
           $macDmg = @(Get-ChildItem -LiteralPath artifacts/mac-release -Filter '*.dmg' -File)
           if ($macDmg.Count -ne 1) { throw 'One macOS DMG is required.' }
           Copy-Item -LiteralPath $macDmg[0].FullName -Destination artifacts/public-release
+          Get-ChildItem -LiteralPath artifacts/public-release-arm64 -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | Copy-Item -Destination artifacts/public-release
           & ./scripts/checksums.ps1 -Directory artifacts/public-release
           $assets = @(Get-ChildItem -LiteralPath artifacts/public-release -File | ForEach-Object { $_.FullName })
           gh release upload $env:RELEASE_TAG @assets --clobber

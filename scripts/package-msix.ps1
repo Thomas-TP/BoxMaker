@@ -1,7 +1,8 @@
 param(
     [switch]$SkipBuild,
     [string]$OutputDir,
-    [string]$IdentityFile
+    [string]$IdentityFile,
+    [ValidateSet('x64', 'arm64')][string]$Architecture = 'x64'
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -25,13 +26,14 @@ $versionMatch = [regex]::Match($version, '^(\d+)\.(\d+)\.(\d+)$')
 if (-not $versionMatch.Success) { throw 'Le Store exige une version stable X.Y.Z sans suffixe.' }
 $msixVersion = "$($versionMatch.Groups[1].Value).$($versionMatch.Groups[2].Value).$($versionMatch.Groups[3].Value).0"
 $sdkBin = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+$sdkArchitectures = @($Architecture, 'x64', 'arm64') | Select-Object -Unique
 $makeAppx = Get-ChildItem -LiteralPath $sdkBin -Directory -ErrorAction SilentlyContinue |
     Sort-Object Name -Descending |
-    ForEach-Object { Join-Path $_.FullName 'x64\makeappx.exe' } |
+    ForEach-Object { $sdkVersion = $_.FullName; $sdkArchitectures | ForEach-Object { Join-Path $sdkVersion "$_\makeappx.exe" } } |
     Where-Object { Test-Path -LiteralPath $_ } |
     Select-Object -First 1
 if (-not $makeAppx) { throw 'MakeAppx.exe introuvable : installer le SDK Windows.' }
-$stage = Join-Path $projectRoot "artifacts\msix-stage-$version-$([guid]::NewGuid().ToString('N'))"
+$stage = Join-Path $projectRoot "artifacts\msix-stage-$version-$Architecture-$([guid]::NewGuid().ToString('N'))"
 $output = if ($OutputDir) { $OutputDir } else { Join-Path $projectRoot 'artifacts\releases' }
 New-Item -ItemType Directory -Path $stage,(Join-Path $stage 'Assets'),$output -Force | Out-Null
 $targetRoot = if ($env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR } else { Join-Path $projectRoot 'target' }
@@ -44,9 +46,10 @@ Set-Content -LiteralPath (Join-Path $stage 'boxmaker-store.txt') -Value 'Microso
 $manifest.Package.Identity.Name = [string]$identity.name
 $manifest.Package.Identity.Publisher = [string]$identity.publisher
 $manifest.Package.Identity.Version = $msixVersion
+$manifest.Package.Identity.ProcessorArchitecture = $Architecture
 $manifest.Package.Properties.PublisherDisplayName = [string]$identity.publisherDisplayName
 $manifest.Save((Join-Path $stage 'AppxManifest.xml'))
-$package = Join-Path $output "Boxmaker-$version-Store-submission-UNSIGNED.msix"
+$package = Join-Path $output "Boxmaker-$version-$Architecture-Store-submission-UNSIGNED.msix"
 & $makeAppx pack /d $stage /p $package /o
 if ($LASTEXITCODE -ne 0) { throw 'Échec de création du MSIX.' }
 & (Join-Path $PSScriptRoot 'checksums.ps1') -Directory $output

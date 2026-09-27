@@ -6,6 +6,17 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.8.2] - 2026-09-28
+
+### Ajouté
+
+- Application Windows ARM64 native : installateur et ZIP portable GitHub, ainsi que paquet ARM64 destiné au Microsoft Store.
+- Canal de mise à jour ARM64 séparé du canal Windows x64 existant.
+
+### Adapté
+
+- La release GitHub fournit désormais des fichiers Windows x64, Windows ARM64 et macOS universel. Les paquets MSIX de soumission restent hors de la release tant que Microsoft ne les a pas signés.
+
 ## [0.8.1] - 2026-09-27
 
 ### Ajouté
