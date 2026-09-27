@@ -108,7 +108,7 @@ jobs:
           app="$mountpoint/Boxmaker.app"
           test -d "$app"
           codesign --verify --deep --strict --verbose=2 "$app"
-          lipo -verify_arch x86_64 arm64 "$app/Contents/MacOS/boxmaker"
+          lipo "$app/Contents/MacOS/boxmaker" -verify_arch x86_64 arm64
           mkdir -p artifacts/mac-release
           version="$(node -p "require('./package.json').version")"
           cp "${images[0]}" "artifacts/mac-release/Boxmaker-${version}-macOS-Universal-UNTESTED.dmg"
