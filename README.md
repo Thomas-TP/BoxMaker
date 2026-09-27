@@ -10,19 +10,20 @@
 </p>
 
 <p align="center">
-  <strong>Windows</strong> · Impression 3D en PLA · Expédition en Suisse
+  <strong>Windows et macOS</strong> · Impression 3D en PLA · Expédition en Suisse
 </p>
 
 <p align="center">
   <a href="https://get.microsoft.com/installer/download/9MX7QLK05FJP?cid=github_readme">
     <img src="https://get.microsoft.com/images/fr%20dark.svg" width="220" alt="Télécharger Boxmaker avec le Microsoft Store">
   </a>
+  <br>Pour Windows. Sur Mac, utilisez le DMG de la release GitHub.
 </p>
 
 <p align="center">
   <a href="https://apps.microsoft.com/detail/9MX7QLK05FJP">Voir la fiche Store</a>
   ·
-  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.0">Autres téléchargements</a>
+  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.1">Windows et Mac : autres téléchargements</a>
   ·
   <a href="docs/UTILISATION.md">Guide d’utilisation</a>
 </p>
@@ -59,7 +60,9 @@
 
 Le **badge Microsoft Store** en haut de cette page télécharge l’installateur Web officiel de Boxmaker. Il est signé par Microsoft, nécessite Internet et installe l’application depuis le Store. Les mises à jour de cette version passent par le Store.
 
-La [release GitHub v0.8.0](https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.0) propose également cet installateur Web, un ZIP portable et un installateur Windows classique. **L’installateur classique GitHub n’est pas signé** : Windows peut afficher « Éditeur inconnu ».
+La [release GitHub v0.8.1](https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.1) propose également cet installateur Web, un ZIP portable, un installateur Windows classique et un **DMG universel pour Mac Intel et Apple Silicon**. L’installateur Windows classique n’est pas signé : Windows peut afficher « Éditeur inconnu ».
+
+**Mac : préversion non testée en conditions réelles.** Le DMG est gratuit, signé localement sans certificat Apple et non notarisé. Après l’avoir glissé dans Applications, macOS peut demander d’autoriser sa première ouverture dans **Réglages Système → Confidentialité et sécurité → Ouvrir quand même**. Les mises à jour Mac se téléchargent pour l’instant depuis les releases GitHub.
 
 ## Avant votre premier envoi
 

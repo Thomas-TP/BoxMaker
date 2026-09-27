@@ -20,13 +20,14 @@ git push origin main
 git push origin v0.1.1
 ```
 
-Le workflow `Windows · checks & releases` :
+Le workflow `Desktop · checks & releases` :
 
 1. Installe les outils épinglés et les dépendances verrouillées.
 2. Exécute Biome, TypeScript, rustfmt, tests Rust, Clippy et le contrôle versions/changelog/notes.
 3. Compile le binaire Windows, crée l’installateur et l’archive portable avec Velopack, ainsi qu’un MSIX de soumission au Store avec MakeAppx, puis recalcule les SHA-256.
 4. Conserve uniquement les fichiers publics en artefacts CI pendant 14 jours ; le MSIX non signé, généré sur le runner pour vérifier le packaging, n'est pas téléversé sur GitHub. Pour Partner Center, générer le MSIX localement.
-5. **Pour un tag seulement**, prépare une liste autorisée de fichiers publics sans MSIX non signé, recalcule leurs SHA-256, crée un brouillon de release, joint ces fichiers et les notes, puis publie lorsque tout a réussi.
+5. Construit et vérifie sur un runner macOS un DMG universel à signature ad hoc, sans essai manuel de l’interface.
+6. **Pour un tag seulement**, publie les fichiers Windows autorisés, télécharge et vérifie la signature de l’installateur Web Microsoft, ajoute le DMG, recalcule leurs SHA-256 et publie les notes lorsque tout a réussi. Le MSIX non signé reste exclu.
 
 Les versions `0.x` et celles avec suffixe sont marquées **préversions**. La source Velopack accepte les préversions pour cette phase de développement. Le téléchargement et le redémarrage restent demandés explicitement par l’utilisateur ; il peut enregistrer le projet avant redémarrage ou installer directement en abandonnant les modifications non enregistrées.
 

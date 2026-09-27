@@ -1,7 +1,22 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri_plugin_dialog::DialogExt;
+#[cfg(target_os = "windows")]
 mod updates;
+#[cfg(not(target_os = "windows"))]
+#[path = "updates_other.rs"]
+mod updates;
+
+#[tauri::command]
+fn app_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macOS"
+    } else if cfg!(target_os = "windows") {
+        "Windows"
+    } else {
+        "Linux"
+    }
+}
 
 #[tauri::command]
 async fn engine(request: String) -> Result<String, String> {
@@ -37,6 +52,7 @@ async fn save_file(
 }
 
 fn main() {
+    #[cfg(target_os = "windows")]
     velopack::VelopackApp::build()
         .set_auto_apply_on_startup(false)
         .run();
@@ -46,6 +62,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             engine,
             save_file,
+            app_platform,
             updates::check_update,
             updates::download_update,
             updates::install_update

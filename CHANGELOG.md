@@ -6,6 +6,21 @@ Les changements visibles sont regroupés par version. Chaque tag `vX.Y.Z` possè
 
 Aucun changement non publié.
 
+## [0.8.1] - 2026-09-27
+
+### Ajouté
+
+- Préversion macOS en DMG universel Intel/Apple Silicon, construite sur macOS par GitHub Actions et publiée à côté des fichiers Windows.
+- Signature ad hoc sans certificat Apple ; l’ouverture nécessite une autorisation manuelle dans les réglages de sécurité macOS.
+
+### Adapté
+
+- Le bouton de mise à jour affiche la plateforme utilisée. La version Mac renvoie aux releases GitHub ; l’installation automatique Velopack reste réservée à Windows.
+
+### Limite
+
+- La compilation et l’intégrité du DMG sont vérifiées automatiquement, mais l’interface et les exports macOS n’ont pas été testés en conditions réelles sur un Mac.
+
 ## [0.8.0] - 2026-09-27
 
 ### Ajouté

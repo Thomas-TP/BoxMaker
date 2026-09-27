@@ -4,7 +4,9 @@ Les commandes ci-dessous se lancent depuis la racine du dépôt. Pour découvrir
 
 ## Installer les outils
 
-Prérequis : Windows, Rust stable/MSVC et outils C++ de Visual Studio, Bun, WebView2. Outils testés : Rust 1.98.0, Bun 1.3.11, Velopack 1.2.0. Pour l’installateur : .NET SDK 8 ou compatible et `dotnet tool restore`, qui installe la version de Velopack verrouillée dans `.config/dotnet-tools.json`.
+Prérequis Windows : Rust stable/MSVC et outils C++ de Visual Studio, Bun, WebView2. Outils testés : Rust 1.98.0, Bun 1.3.11, Velopack 1.2.0. Pour l’installateur Windows : .NET SDK 8 ou compatible et `dotnet tool restore`, qui installe la version de Velopack verrouillée dans `.config/dotnet-tools.json`.
+
+Sur macOS : installer les outils de ligne de commande Xcode, Rust, Bun et CMake. Le workflow GitHub compile un DMG universel avec `bunx tauri build --config src-tauri/tauri.macos.conf.json --target universal-apple-darwin --bundles dmg`. Il utilise une signature ad hoc sans identité Apple vérifiée. La compilation est automatisée, mais le fonctionnement sur un Mac utilisateur reste à tester.
 
 ```powershell
 bun install --frozen-lockfile
@@ -24,7 +26,7 @@ Ne pas lancer `dev` et `desktop` simultanément : le port 1420 est partagé.
 
 - `crates/boxmaker-core` : validation, géométrie paramétrique, maillages, masse, tarifs, STL binaire et 3MF.
 - `crates/boxmaker-cli` : adaptateur JSON utilisé uniquement par le serveur Vite local. Aucun calcul métier dupliqué dans l’interface.
-- `src-tauri` : application native, commandes Rust, dialogue « Enregistrer sous » et initialisation Velopack avant Tauri.
+- `src-tauri` : application native, commandes Rust, dialogue « Enregistrer sous » et initialisation Velopack avant Tauri sur Windows.
 - `src` : React/TypeScript strict et Three.js. Le rendu utilise les mêmes triangles que les exports.
 - `scripts/package-windows.ps1` : création du package Velopack depuis un répertoire de staging dédié.
 
@@ -41,7 +43,7 @@ La nouvelle géométrie utilise Manifold via les bindings Rust `manifold-csg` po
 
 ## Velopack
 
-L’application initialise `VelopackApp` avant toute initialisation de l’interface. L’installation Windows et les fichiers de release sont générés par Velopack ; le packaging NSIS de Tauri est désactivé. WebView2 est déclaré comme prérequis de l’installateur.
+Sur Windows, l’application initialise `VelopackApp` avant toute initialisation de l’interface. L’installation Windows et les fichiers de release sont générés par Velopack ; le packaging NSIS de Tauri est désactivé. WebView2 est déclaré comme prérequis de l’installateur. Sur Mac, Tauri produit directement le DMG et la mise à jour intégrée est désactivée.
 
 Les mises à jour utilisent [les releases du dépôt GitHub](https://github.com/Thomas-TP/BoxMaker/releases), sans identifiants embarqués. Le bouton « Mises à jour » dans la barre d’outils permet de vérifier, lire les notes puis télécharger une version. « Installer et redémarrer » fonctionne sans enregistrer le projet ; une seconde action permet d’enregistrer puis d’installer. Les modifications non enregistrées sont perdues au redémarrage. Aucune vérification réseau, aucun téléchargement et aucun redémarrage ne sont déclenchés automatiquement au lancement. Les préversions sont incluses pendant la phase `0.x`.
 

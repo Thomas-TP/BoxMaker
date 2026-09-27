@@ -6,6 +6,8 @@ L’application ne contient pas de publicité, de suivi d’utilisation ni de se
 
 La version Windows installée depuis GitHub contacte GitHub uniquement quand vous demandez de vérifier ou de télécharger une mise à jour. La version Microsoft Store utilise le mécanisme de mise à jour du Store. Les téléchargements et l’installation par ces services peuvent produire des données techniques, comme l’adresse IP, selon leurs politiques respectives.
 
+La version macOS ne vérifie ni ne télécharge automatiquement les mises à jour. Le lien vers les releases ouvre GitHub dans le navigateur uniquement si vous le sélectionnez.
+
 Les fichiers `.boxmaker.json`, STL et 3MF enregistrés par vos soins peuvent être supprimés depuis votre système de fichiers. Désinstaller Boxmaker supprime l’application, mais ne supprime pas automatiquement les fichiers que vous avez exportés.
 
 Pour toute question concernant Boxmaker, utilisez les [issues du dépôt](https://github.com/Thomas-TP/BoxMaker/issues).

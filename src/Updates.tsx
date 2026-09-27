@@ -5,7 +5,7 @@ import {
   RefreshCw,
   Save,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface UpdateView {
   state: "unavailable" | "available" | "current" | "empty" | "store";
@@ -25,6 +25,14 @@ export function Updates({
   const [busy, setBusy] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [error, setError] = useState("");
+  const [platform, setPlatform] = useState("Ordinateur");
+  useEffect(() => {
+    if (!("__TAURI_INTERNALS__" in window)) return;
+    void import("@tauri-apps/api/core")
+      .then(({ invoke }) => invoke<string>("app_platform"))
+      .then(setPlatform)
+      .catch(() => {});
+  }, []);
   async function check() {
     setBusy(true);
     setError("");
@@ -81,7 +89,7 @@ export function Updates({
           <strong>Boxmaker {__APP_VERSION__}</strong>
           <span>Version installée · préversion</span>
         </div>
-        <span className="version">Windows</span>
+        <span className="version">{platform}</span>
       </div>
       <p className="update-source">
         <span>
