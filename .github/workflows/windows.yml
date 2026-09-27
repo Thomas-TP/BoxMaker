@@ -97,13 +97,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          app="target/universal-apple-darwin/release/bundle/macos/Boxmaker.app"
-          test -d "$app"
-          codesign --verify --deep --strict --verbose=2 "$app"
           shopt -s nullglob
           images=(target/universal-apple-darwin/release/bundle/dmg/*.dmg)
           test "${#images[@]}" -eq 1
           hdiutil verify "${images[0]}"
+          mountpoint="$RUNNER_TEMP/boxmaker-dmg"
+          mkdir -p "$mountpoint"
+          hdiutil attach "${images[0]}" -readonly -nobrowse -mountpoint "$mountpoint"
+          trap 'hdiutil detach "$mountpoint"' EXIT
+          app="$mountpoint/Boxmaker.app"
+          test -d "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          lipo -verify_arch x86_64 arm64 "$app/Contents/MacOS/boxmaker"
           mkdir -p artifacts/mac-release
           version="$(node -p "require('./package.json').version")"
           cp "${images[0]}" "artifacts/mac-release/Boxmaker-${version}-macOS-Universal-UNTESTED.dmg"
