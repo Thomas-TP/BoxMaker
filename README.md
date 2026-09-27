@@ -2,11 +2,11 @@
 
 Application Windows locale pour concevoir une boîte d’expédition imprimée en PLA, visualiser ses pièces et comparer les tarifs de la Poste suisse. La fermeture coulissante peut recevoir un scellé imprimé à usage unique ; le modèle à clavette reste disponible.
 
-[Télécharger la préversion Windows](https://github.com/Thomas-TP/BoxMaker/releases) · [Notes de version](CHANGELOG.md) · [Compilation et releases](https://github.com/Thomas-TP/BoxMaker/actions)
+[Installer depuis le Microsoft Store](https://apps.microsoft.com/detail/9MX7QLK05FJP) · [Télécharger la version GitHub](https://github.com/Thomas-TP/BoxMaker/releases) · [Notes de version](CHANGELOG.md) · [Compilation et releases](https://github.com/Thomas-TP/BoxMaker/actions)
 
 ## Utilisation
 
-L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmaker-win-Setup.exe`. **Cet EXE GitHub n’est pas signé** et Windows peut afficher « Éditeur inconnu ». Un ZIP portable est également produit. Le MSIX non signé est utilisé localement pour Partner Center et n’est pas téléversé sur GitHub, y compris dans les artefacts Actions. Après certification, la version installable et signée sera distribuée par la [fiche Microsoft Store Boxmaker](https://apps.microsoft.com/detail/9MX7QLK05FJP). Le binaire autonome est `target/release/boxmaker.exe` et nécessite le runtime Microsoft WebView2.
+La version installable signée est disponible sur la [fiche Microsoft Store Boxmaker](https://apps.microsoft.com/detail/9MX7QLK05FJP), sous l’éditeur ThomasTP. L’installateur Velopack se trouve dans `artifacts/releases/Swiss3Design.Boxmaker-win-Setup.exe`. **Cet EXE GitHub n’est pas signé** et Windows peut afficher « Éditeur inconnu ». Un ZIP portable est également produit. Le MSIX non signé sert à la soumission Partner Center et n’est pas téléversé sur GitHub, y compris dans les artefacts Actions. Le binaire autonome est `target/release/boxmaker.exe` et nécessite le runtime Microsoft WebView2.
 
 1. Saisir les trois dimensions en **mm**, dans n’importe quel ordre : le modèle coulissant choisit automatiquement une orientation imprimable et basse. Renseigner le poids en **g**. Le jeu d’insertion vaut 0,3 mm par face ; ajouter séparément le calage nécessaire.
 2. Choisir **Bambu Lab P1S (256³ mm)** ou **Creality K2 classique (260³ mm)**.
@@ -67,6 +67,6 @@ Les mises à jour utilisent [les releases du dépôt GitHub](https://github.com/
 
 Le workflow GitHub vérifie et construit chaque push/PR. Un tag de version valide déclenche ensuite la publication de la release avec installateur, portable, fichiers Velopack et SHA-256. Le MSIX non signé sert à la soumission Store locale et n’est pas envoyé à GitHub. Voir [le guide de release](docs/RELEASING.md). Aucun compte externe n’est nécessaire pour concevoir une boîte localement.
 
-Thomas Prud'homme figure dans les métadonnées de l’EXE Windows, sans que cela constitue une signature. L’EXE publié sur GitHub reste non signé. Le compte Microsoft Store affiche désormais « ThomasTP » ; le MSIX de soumission porte exactement l’identité attribuée par Partner Center et ne s’installe pas directement tant qu’il n’a pas été signé et distribué par Microsoft. Le cycle réel installation → mise à jour reste à valider après publication. Voir [la procédure de publication](docs/RELEASING.md#éditeur-windows-et-signature) et la [confidentialité](docs/PRIVACY.md).
+Thomas Prud'homme figure dans les métadonnées de l’EXE Windows, sans que cela constitue une signature. L’EXE publié sur GitHub reste non signé. Le compte Microsoft Store affiche « ThomasTP » ; le MSIX de soumission porte exactement l’identité attribuée par Partner Center et n’est pas destiné à une installation directe. Le cycle réel installation → mise à jour depuis le Store reste à valider sur Windows. Voir [la procédure de publication](docs/RELEASING.md#éditeur-windows-et-signature) et la [confidentialité](docs/PRIVACY.md).
 
 Documentation : [intégration Rust Velopack](https://docs.velopack.io/getting-started/rust), [packaging](https://docs.velopack.io/packaging/overview).
