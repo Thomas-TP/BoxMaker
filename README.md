@@ -17,7 +17,7 @@
   <a href="https://get.microsoft.com/installer/download/9MX7QLK05FJP?cid=github_readme">
     <img src="https://get.microsoft.com/images/fr%20dark.svg" width="220" alt="Télécharger Boxmaker avec le Microsoft Store">
   </a>
-  <br>Pour Windows. Sur Mac, utilisez le DMG de la release GitHub.
+  <br>Pour Windows : le Store choisit automatiquement la version x64 ou ARM64 de votre PC.
 </p>
 
 <p align="center">
@@ -58,9 +58,15 @@
 
 ## Installer Boxmaker
 
-Le **badge Microsoft Store** en haut de cette page télécharge l’installateur Web officiel de Boxmaker. Il est signé par Microsoft, nécessite Internet et installe l’application depuis le Store. Les mises à jour de cette version passent par le Store.
+Le **badge Microsoft Store** en haut de cette page télécharge l’installateur Web officiel de Boxmaker. Il est signé par Microsoft, nécessite Internet et installe la version adaptée à votre PC. Les mises à jour de cette version passent par le Store.
 
-La [release GitHub v0.8.2](https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.2) propose également cet installateur Web, des installateurs et ZIP portables pour **Windows x64 et ARM64**, ainsi qu’un **DMG universel pour Mac Intel et Apple Silicon**. Choisissez ARM64 pour un PC Windows à processeur ARM. Les installateurs Windows classiques ne sont pas signés : Windows peut afficher « Éditeur inconnu ».
+| Votre appareil | Téléchargement direct sur GitHub |
+| --- | --- |
+| Windows Intel ou AMD | [Installateur x64](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Swiss3Design.Boxmaker-win-Setup.exe) · [ZIP portable](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Swiss3Design.Boxmaker-win-Portable.zip) |
+| Windows ARM (Snapdragon) | [Installateur ARM64](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Swiss3Design.Boxmaker.Arm64-win-arm64-Setup.exe) · [ZIP portable](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Swiss3Design.Boxmaker.Arm64-win-arm64-Portable.zip) |
+| Mac Intel ou Apple Silicon | [DMG universel — préversion non testée](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Boxmaker-0.8.2-macOS-Universal-UNTESTED.dmg) |
+
+Les installateurs Windows directs de GitHub ne sont pas signés : Windows peut afficher « Éditeur inconnu ». Le Store est l’option la plus simple si vous souhaitez une installation signée et des mises à jour automatiques.
 
 **Mac : préversion non testée en conditions réelles.** Le DMG est gratuit, signé localement sans certificat Apple et non notarisé. Après l’avoir glissé dans Applications, macOS peut demander d’autoriser sa première ouverture dans **Réglages Système → Confidentialité et sécurité → Ouvrir quand même**. Les mises à jour Mac se téléchargent pour l’instant depuis les releases GitHub.
 
