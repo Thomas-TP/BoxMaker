@@ -176,10 +176,10 @@ jobs:
           lipo "$app/Contents/MacOS/boxmaker" -verify_arch x86_64 arm64
           mkdir -p artifacts/mac-release
           version="$(node -p "require('./package.json').version")"
-          cp "${images[0]}" "artifacts/mac-release/Boxmaker-${version}-macOS-Universal-UNTESTED.dmg"
+          cp "${images[0]}" "artifacts/mac-release/Boxmaker-${version}-macOS.dmg"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: boxmaker-macos-universal-untested
+          name: boxmaker-macos-universal
           path: artifacts/mac-release/*.dmg
           if-no-files-found: error
           retention-days: 14
@@ -209,7 +209,7 @@ jobs:
           path: artifacts/public-release-arm64
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: boxmaker-macos-universal-untested
+          name: boxmaker-macos-universal
           path: artifacts/mac-release
       - name: Restore the pinned Velopack CLI
         run: dotnet tool restore
@@ -237,7 +237,26 @@ jobs:
           if ($preview) { $armArguments += '--pre' }
           dotnet tool run vpk -- @armArguments
           if ($LASTEXITCODE -ne 0) { throw 'Velopack ARM64 upload failed.' }
-          $storeInstaller = Join-Path (Resolve-Path artifacts/public-release) 'Boxmaker-Microsoft-Store-Web-Installer.exe'
+          # Velopack needs the build inventory locally during upload. The public
+          # release only needs the two feeds and their full update packages.
+          $remoteNames = @(gh release view $env:RELEASE_TAG --json assets --jq '.assets[].name')
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect uploaded release assets.' }
+          $extras = @(Get-ChildItem -LiteralPath artifacts/public-release -File | Where-Object {
+            $_.Name -like 'assets.*.json' -or $_.Name -like 'RELEASES*' -or
+            $_.Name -like '*-Portable.zip' -or $_.Name -like '*-Setup.exe'
+          })
+          $extras += @(Get-ChildItem -LiteralPath artifacts/public-release-arm64 -File | Where-Object {
+            $_.Name -like 'assets.*.json' -or $_.Name -like 'RELEASES*' -or
+            $_.Name -like '*-Portable.zip' -or $_.Name -like '*-Setup.exe'
+          })
+          foreach ($extra in $extras) {
+            if ($remoteNames -contains $extra.Name) {
+              gh release delete-asset $env:RELEASE_TAG $extra.Name --yes
+              if ($LASTEXITCODE -ne 0) { throw "Could not remove $($extra.Name) from release." }
+            }
+            Remove-Item -LiteralPath $extra.FullName
+          }
+          $storeInstaller = Join-Path (Resolve-Path artifacts/public-release) 'Boxmaker-Windows.exe'
           Invoke-WebRequest -Uri 'https://get.microsoft.com/installer/download/9MX7QLK05FJP' -OutFile $storeInstaller
           $signature = Get-AuthenticodeSignature -LiteralPath $storeInstaller
           if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') {
@@ -251,6 +270,21 @@ jobs:
           $assets = @(Get-ChildItem -LiteralPath artifacts/public-release -File | ForEach-Object { $_.FullName })
           gh release upload $env:RELEASE_TAG @assets --clobber
           if ($LASTEXITCODE -ne 0) { throw 'Release assets upload failed.' }
+          $release = gh api "repos/$env:GH_REPO/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the final release.' }
+          foreach ($asset in $release.assets) {
+            $label = switch -Wildcard ($asset.name) {
+              'Boxmaker-Windows.exe' { 'Windows · installation Microsoft Store'; break }
+              "Boxmaker-$version-macOS.dmg" { 'macOS · Intel et Apple Silicon'; break }
+              'SHA256SUMS.txt' { 'Empreintes SHA-256'; break }
+              'releases.win*.json' { 'Mises à jour Windows · fichier technique'; break }
+              '*.nupkg' { 'Mises à jour Windows · paquet technique'; break }
+            }
+            if ($label) {
+              gh api -X PATCH "repos/$env:GH_REPO/releases/assets/$($asset.id)" -f "label=$label" | Out-Null
+              if ($LASTEXITCODE -ne 0) { throw "Could not label $($asset.name)." }
+            }
+          }
           $edit = @('release', 'edit', $env:RELEASE_TAG, '--draft=false', '--notes-file', "docs/releases/$env:RELEASE_TAG.md")
           if ($preview) { $edit += @('--prerelease', '--latest=false') }
           gh @edit

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60" viewBox="0 0 220 60" role="img" aria-labelledby="title">
+  <title id="title">Télécharger Boxmaker pour macOS</title>
+  <rect x="1" y="1" width="218" height="58" rx="11" fill="#15191d" stroke="#6b7178" stroke-width="2"/>
+  <path d="M31 17v19m-7-7 7 7 7-7M21 42h20" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"/>
+  <text x="58" y="25" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="13">Télécharger pour</text>
+  <text x="58" y="46" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="700">macOS</text>
+</svg>

@@ -17,13 +17,18 @@
   <a href="https://get.microsoft.com/installer/download/9MX7QLK05FJP?cid=github_readme">
     <img src="https://get.microsoft.com/images/fr%20dark.svg" width="220" alt="Télécharger Boxmaker avec le Microsoft Store">
   </a>
-  <br>Pour Windows : le Store choisit automatiquement la version x64 ou ARM64 de votre PC.
+  &nbsp;&nbsp;
+  <a href="https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Boxmaker-0.8.2-macOS.dmg">
+    <img src="assets/download-macos.svg" width="220" alt="Télécharger Boxmaker pour macOS">
+  </a>
 </p>
 
 <p align="center">
-  <a href="https://apps.microsoft.com/detail/9MX7QLK05FJP">Voir la fiche Store</a>
+  Windows : Intel/AMD et ARM64 · macOS : Intel et Apple Silicon
+  <br>
+  <a href="https://apps.microsoft.com/detail/9MX7QLK05FJP">Fiche Microsoft Store</a>
   ·
-  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.2">Windows et Mac : autres téléchargements</a>
+  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.2">Notes de version et fichiers de vérification</a>
   ·
   <a href="docs/UTILISATION.md">Guide d’utilisation</a>
 </p>
@@ -58,15 +63,7 @@
 
 ## Installer Boxmaker
 
-Le **badge Microsoft Store** en haut de cette page télécharge l’installateur Web officiel de Boxmaker. Il est signé par Microsoft, nécessite Internet et installe la version adaptée à votre PC. Les mises à jour de cette version passent par le Store.
-
-| Votre appareil | Téléchargement direct sur GitHub |
-| --- | --- |
-| Windows Intel ou AMD | [Installateur x64](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Swiss3Design.Boxmaker-win-Setup.exe) · [ZIP portable](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Swiss3Design.Boxmaker-win-Portable.zip) |
-| Windows ARM (Snapdragon) | [Installateur ARM64](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Swiss3Design.Boxmaker.Arm64-win-arm64-Setup.exe) · [ZIP portable](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Swiss3Design.Boxmaker.Arm64-win-arm64-Portable.zip) |
-| Mac Intel ou Apple Silicon | [DMG universel — préversion non testée](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Boxmaker-0.8.2-macOS-Universal-UNTESTED.dmg) |
-
-Les installateurs Windows directs de GitHub ne sont pas signés : Windows peut afficher « Éditeur inconnu ». Le Store est l’option la plus simple si vous souhaitez une installation signée et des mises à jour automatiques.
+Cliquez sur le bouton correspondant à votre ordinateur. Sous Windows, l’installateur Web officiel est **signé par Microsoft**, nécessite Internet et choisit automatiquement la version x64 ou ARM64. Cette installation reçoit ses mises à jour depuis le Microsoft Store. Le même [installateur Windows est disponible dans la release GitHub](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Boxmaker-Windows.exe).
 
 **Mac : préversion non testée en conditions réelles.** Le DMG est gratuit, signé localement sans certificat Apple et non notarisé. Après l’avoir glissé dans Applications, macOS peut demander d’autoriser sa première ouverture dans **Réglages Système → Confidentialité et sécurité → Ouvrir quand même**. Les mises à jour Mac se téléchargent pour l’instant depuis les releases GitHub.
 
