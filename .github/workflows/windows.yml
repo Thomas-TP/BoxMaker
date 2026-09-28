@@ -228,6 +228,10 @@ jobs:
           $existingJson = gh release view $env:RELEASE_TAG --json isDraft 2>$null
           $existing = if ($LASTEXITCODE -eq 0) { $existingJson | ConvertFrom-Json } else { $null }
           if ($existing -and -not $existing.isDraft) { throw 'A published release is immutable. Create a new version.' }
+          $feedBackup = Join-Path $env:RUNNER_TEMP 'boxmaker-release-feeds'
+          New-Item -ItemType Directory -Path $feedBackup -Force | Out-Null
+          Copy-Item -LiteralPath artifacts/public-release/releases.win.json -Destination $feedBackup
+          Copy-Item -LiteralPath artifacts/public-release-arm64/releases.win-arm64.json -Destination $feedBackup
           $arguments = @('upload', 'github', '--repoUrl', "https://github.com/$env:GH_REPO", '--token', $env:GH_TOKEN, '--outputDir', 'artifacts/public-release', '--tag', $env:RELEASE_TAG, '--targetCommitish', $env:RELEASE_COMMIT, '--releaseName', "Boxmaker $env:RELEASE_TAG")
           if ($preview) { $arguments += '--pre' }
           if ($existing) { $arguments += '--merge' }
@@ -237,6 +241,8 @@ jobs:
           if ($preview) { $armArguments += '--pre' }
           dotnet tool run vpk -- @armArguments
           if ($LASTEXITCODE -ne 0) { throw 'Velopack ARM64 upload failed.' }
+          Copy-Item -LiteralPath (Join-Path $feedBackup 'releases.win.json') -Destination artifacts/public-release -Force
+          Copy-Item -LiteralPath (Join-Path $feedBackup 'releases.win-arm64.json') -Destination artifacts/public-release-arm64 -Force
           # Velopack needs the build inventory locally during upload. The public
           # release only needs the two feeds and their full update packages.
           $remoteNames = @(gh release view $env:RELEASE_TAG --json assets --jq '.assets[].name')
@@ -270,9 +276,14 @@ jobs:
           $assets = @(Get-ChildItem -LiteralPath artifacts/public-release -File | ForEach-Object { $_.FullName })
           gh release upload $env:RELEASE_TAG @assets --clobber
           if ($LASTEXITCODE -ne 0) { throw 'Release assets upload failed.' }
-          $release = gh api "repos/$env:GH_REPO/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
-          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the final release.' }
-          foreach ($asset in $release.assets) {
+          # The by-tag API returns 404 for a draft release; the release list includes it.
+          $release = @(gh api "repos/$env:GH_REPO/releases?per_page=100" | ConvertFrom-Json | Where-Object { $_.tag_name -eq $env:RELEASE_TAG })
+          if ($LASTEXITCODE -ne 0 -or $release.Count -ne 1) { throw 'Could not inspect the draft release.' }
+          $expectedAssets = @('Boxmaker-Windows.exe', "Boxmaker-$version-macOS.dmg", 'SHA256SUMS.txt', 'releases.win.json', 'releases.win-arm64.json')
+          foreach ($name in $expectedAssets) {
+            if ($name -notin @($release[0].assets | ForEach-Object { $_.name })) { throw "Missing release asset: $name" }
+          }
+          foreach ($asset in $release[0].assets) {
             $label = switch -Wildcard ($asset.name) {
               'Boxmaker-Windows.exe' { 'Windows · Microsoft Store installer'; break }
               "Boxmaker-$version-macOS.dmg" { 'macOS · Intel and Apple Silicon'; break }
