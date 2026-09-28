@@ -137,6 +137,32 @@ p {
   align-items: center;
   gap: 8px;
 }
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  min-width: 0;
+  padding: 3px;
+  border: 1px solid #dce2ed;
+  border-radius: 10px;
+  background: #eef2f8;
+}
+.language-switch button {
+  border: 0;
+  background: transparent;
+  color: #69758a;
+  border-radius: 7px;
+  min-width: 31px;
+  min-height: 30px;
+  padding: 4px 5px;
+  font-size: 10px;
+  font-weight: 750;
+}
+.language-switch button.active {
+  color: #233258;
+  background: #fff;
+  box-shadow: 0 1px 4px #1c2a401f;
+}
 .header-actions .compact-export {
   display: none;
 }

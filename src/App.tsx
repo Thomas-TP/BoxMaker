@@ -23,6 +23,13 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+  getLanguage,
+  type Language,
+  localizeTree,
+  setLanguage,
+  tr,
+} from "./i18n";
 import { Modal } from "./Modal";
 import type { Design, Params } from "./types";
 import { defaults, download, engine } from "./types";
@@ -30,11 +37,14 @@ import { Updates } from "./Updates";
 import { Viewer } from "./Viewer";
 
 const money = (v: number) =>
-  new Intl.NumberFormat("fr-CH", { style: "currency", currency: "CHF" }).format(
-    v,
-  );
+  new Intl.NumberFormat(getLanguage() === "fr" ? "fr-CH" : "en-CH", {
+    style: "currency",
+    currency: "CHF",
+  }).format(v);
 const number = (v: number) =>
-  new Intl.NumberFormat("fr-CH", { maximumFractionDigits: 1 }).format(v);
+  new Intl.NumberFormat(getLanguage() === "fr" ? "fr-CH" : "en-CH", {
+    maximumFractionDigits: 1,
+  }).format(v);
 const dimensions = (v: number[]) => v.map(number).join(" × ");
 
 function Field({
@@ -67,7 +77,7 @@ function Field({
           max={max}
           step={step}
           value={value ?? ""}
-          placeholder={optional ? "Inconnu" : ""}
+          placeholder={optional ? tr("Inconnu") : ""}
           onChange={(e) =>
             onChange(
               e.target.value === "" && optional ? null : Number(e.target.value),
@@ -81,6 +91,7 @@ function Field({
 }
 
 export default function App() {
+  const [language, setLanguageState] = useState<Language>(getLanguage);
   const [params, setParams] = useState<Params>(defaults);
   const [design, setDesign] = useState<Design | null>(null);
   const [mode, setMode] = useState<"assembled" | "exploded" | "print" | "open">(
@@ -121,6 +132,9 @@ export default function App() {
         : {}),
       [key]: value,
     }));
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
   useEffect(() => {
     const id = ++sequence.current;
     setBusy(true);
@@ -231,7 +245,7 @@ export default function App() {
   const tariffExpired = design
     ? new Date().toISOString().slice(0, 10) > design.tariffValidUntil
     : false;
-  return (
+  return localizeTree(
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
@@ -247,6 +261,22 @@ export default function App() {
           <span className="version">v{__APP_VERSION__}</span>
         </div>
         <div className="header-actions">
+          <fieldset className="language-switch" aria-label="Langue / Language">
+            {(["fr", "en"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                className={language === value ? "active" : ""}
+                aria-pressed={language === value}
+                onClick={() => {
+                  setLanguage(value);
+                  setLanguageState(value);
+                }}
+              >
+                {value.toUpperCase()}
+              </button>
+            ))}
+          </fieldset>
           <button
             type="button"
             className="primary compact-export"
@@ -1181,6 +1211,6 @@ export default function App() {
       >
         <Updates saveProject={saveProject} canSave={!stale} />
       </Modal>
-    </div>
+    </div>,
   );
 }

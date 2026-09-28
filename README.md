@@ -36,7 +36,7 @@
 ---
 
 <p align="center">
-  <img src="store/screenshots/Boxmaker-workspace-1920x1080.png" width="960" alt="Boxmaker workspace showing dimensions, a 3D preview, exports, and shipping estimates">
+  <img src="store/screenshots/Boxmaker-workspace-en-1920x1080.png" width="960" alt="Boxmaker workspace showing dimensions, a 3D preview, exports, and shipping estimates">
 </p>
 
 ## From your object to a printable box
@@ -49,8 +49,10 @@
 | **📦 Ready to plan a shipment** | Compare Swiss Post options using estimated dimensions and weight, then enter the actual weight of your packed box. |
 
 <p align="center">
-  <img src="store/screenshots/Boxmaker-parts-1920x1080.png" width="960" alt="The box, lid, and seal laid out as three separate printable parts">
+  <img src="store/screenshots/Boxmaker-parts-en-1920x1080.png" width="960" alt="The box, lid, and seal laid out as three separate printable parts">
 </p>
+
+The app is available in **English and French**. It follows your system language on first launch, and you can switch languages any time from the toolbar.
 
 ## How it works
 

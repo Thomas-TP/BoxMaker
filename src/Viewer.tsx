@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { localizeTree } from "./i18n";
 import type { Design } from "./types";
 
 interface Props {
@@ -282,13 +283,13 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
       sun.shadow.dispose();
     };
   }, [design, mode, showObject, reset, opening]);
-  return (
+  return localizeTree(
     <section
       className="three-view"
       ref={mount}
       aria-label="Aperçu 3D interactif de la boîte"
     >
       {error && <p className="viewer-error">{error}</p>}
-    </section>
+    </section>,
   );
 }

@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
+import { localizeTree } from "./i18n";
 
 export function Modal({
   open,
@@ -18,7 +19,7 @@ export function Modal({
     if (open && !dialog?.open) dialog?.showModal();
     if (!open && dialog?.open) dialog.close();
   }, [open]);
-  return (
+  return localizeTree(
     <dialog
       ref={ref}
       className="app-dialog"
@@ -35,6 +36,6 @@ export function Modal({
         <X size={20} />
       </button>
       {children}
-    </dialog>
+    </dialog>,
   );
 }

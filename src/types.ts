@@ -1,3 +1,4 @@
+import { tr } from "./i18n";
 export interface Params {
   model: "press-slide" | "legacy";
   seal: boolean;
@@ -105,7 +106,8 @@ export async function engine<T>(
     body: request,
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "Le moteur ne répond pas.");
+  if (!response.ok)
+    throw new Error(tr(data.error || "Le moteur ne répond pas."));
   return data;
 }
 

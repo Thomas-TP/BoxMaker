@@ -6,6 +6,7 @@ import {
   Save,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { localizeTree } from "./i18n";
 
 interface UpdateView {
   state: "unavailable" | "available" | "current" | "empty" | "store";
@@ -74,7 +75,7 @@ export function Updates({
       setBusy(false);
     }
   }
-  return (
+  return localizeTree(
     <section className="update-panel">
       <div className="eyebrow">TOUJOURS À JOUR</div>
       <h2>Mises à jour</h2>
@@ -174,6 +175,6 @@ export function Updates({
           {error}
         </p>
       )}
-    </section>
+    </section>,
   );
 }

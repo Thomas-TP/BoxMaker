@@ -8,7 +8,8 @@ No unreleased changes.
 
 ## [0.8.3] - 2026-09-28
 
-- English README, user guide, release notes, screenshots filenames, and release asset labels.
+- English and French app interface and Microsoft Store listings, with language selection and automatic language detection.
+- English README, user guide, release notes, screenshot filenames, and release asset labels.
 - English default filenames for saved projects and complete 3MF exports.
 - Updated macOS download badge using the Boxmaker logo.
 
