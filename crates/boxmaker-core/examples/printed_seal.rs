@@ -191,7 +191,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         )?;
     }
     fs::write(
-        output.join("Boxmaker-scelle-imprime-prototype.3mf"),
+        output.join("Boxmaker-printed-seal-prototype.3mf"),
         export::three_mf_parts(&parts)?,
     )?;
     fs::write(output.join("scelle-principe.svg"), top_svg(&parts[3]))?;

@@ -349,7 +349,7 @@ pub fn dispatch(input: &str) -> Result<String, String> {
                 let bytes = export::three_mf_parts(&design.parts)?;
                 return Ok(serde_json::json!({
                     "bytes": bytes,
-                    "filename": "boxmaker-complet-PLA.3mf"
+                    "filename": "boxmaker-all-parts-PLA.3mf"
                 })
                 .to_string());
             }
@@ -387,7 +387,7 @@ mod tests {
         };
         let result: serde_json::Value =
             serde_json::from_str(&request(Params::default(), "3mf").unwrap()).unwrap();
-        assert_eq!(result["filename"], "boxmaker-complet-PLA.3mf");
+        assert_eq!(result["filename"], "boxmaker-all-parts-PLA.3mf");
         assert!(!result["bytes"].as_array().unwrap().is_empty());
         assert!(
             request(Params::default(), "stl")

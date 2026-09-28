@@ -1,7 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60" viewBox="0 0 220 60" role="img" aria-labelledby="title">
-  <title id="title">Télécharger Boxmaker pour macOS</title>
-  <rect x="1" y="1" width="218" height="58" rx="11" fill="#15191d" stroke="#6b7178" stroke-width="2"/>
-  <path d="M31 17v19m-7-7 7 7 7-7M21 42h20" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"/>
-  <text x="58" y="25" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="13">Télécharger pour</text>
-  <text x="58" y="46" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="700">macOS</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60" viewBox="0 0 220 60" role="img" aria-labelledby="title description">
+  <title id="title">Download Boxmaker for macOS</title>
+  <desc id="description">A custom download badge with the Boxmaker logo.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c2922"/>
+      <stop offset="1" stop-color="#101713"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="218" height="58" rx="10" fill="url(#background)" stroke="#778a7a" stroke-width="1.5"/>
+  <svg x="11" y="8" width="44" height="44" viewBox="0 0 256 256" aria-hidden="true">
+    <rect width="256" height="256" rx="58" fill="#355c42"/>
+    <g fill="none" stroke="#f1f5e9" stroke-width="12" stroke-linejoin="round">
+      <path d="M128 49 201 90 201 170 128 212 55 170 55 90Z"/>
+      <path d="m55 90 73 43 73-43M128 133v79M91 70l74 42"/>
+    </g>
+  </svg>
+  <text x="67" y="24" fill="#c8d9cb" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="600" letter-spacing=".5">DOWNLOAD FOR</text>
+  <text x="67" y="47" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700">macOS</text>
 </svg>

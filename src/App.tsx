@@ -181,7 +181,7 @@ export default function App() {
     try {
       const saved = await download(
         JSON.stringify({ version: 5, params }, null, 2),
-        "ma-boite.boxmaker.json",
+        "boxmaker-project.boxmaker.json",
         "application/json",
       );
       setNotice(saved ? "Projet enregistré." : "Enregistrement annulé.");

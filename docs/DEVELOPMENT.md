@@ -1,6 +1,6 @@
 # Développement de Boxmaker
 
-Les commandes ci-dessous se lancent depuis la racine du dépôt. Pour découvrir l’application, voir le [README](../README.md) et le [guide d’utilisation](UTILISATION.md).
+Les commandes ci-dessous se lancent depuis la racine du dépôt. Pour découvrir l’application, voir le [README](../README.md) et le [guide d’utilisation](USER_GUIDE.md).
 
 ## Installer les outils
 

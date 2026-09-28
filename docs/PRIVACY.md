@@ -1,13 +1,9 @@
-# Confidentialité de Boxmaker
+# Privacy
 
-Boxmaker crée et exporte des modèles de boîtes sur votre appareil. Les dimensions, réglages, poids saisis et fichiers de projet restent dans l’application ou dans les fichiers que vous choisissez d’enregistrer. Boxmaker ne demande pas de compte et ne transmet pas ces données à son éditeur.
+Boxmaker designs and exports printable boxes locally on your computer. It does not require a Boxmaker account and does not contain ads, usage tracking, or analytics.
 
-L’application ne contient pas de publicité, de suivi d’utilisation ni de service d’analyse. Si vous ouvrez un lien vers La Poste suisse, GitHub ou le Microsoft Store, le site ou l’application externe applique sa propre politique de confidentialité.
+Your projects, dimensions, weights, and exported models stay on your device unless you choose to share them. If you open a link to Swiss Post, GitHub, or Microsoft Store, that external service applies its own privacy policy.
 
-La version Windows installée depuis GitHub contacte GitHub uniquement quand vous demandez de vérifier ou de télécharger une mise à jour. La version Microsoft Store utilise le mécanisme de mise à jour du Store. Les téléchargements et l’installation par ces services peuvent produire des données techniques, comme l’adresse IP, selon leurs politiques respectives.
+The Windows version installed through GitHub contacts GitHub only when you ask it to check for or download an update. The Microsoft Store version uses Store updates. Those services may process technical data, such as your IP address, according to their own policies.
 
-La version macOS ne vérifie ni ne télécharge automatiquement les mises à jour. Le lien vers les releases ouvre GitHub dans le navigateur uniquement si vous le sélectionnez.
-
-Les fichiers `.boxmaker.json`, STL et 3MF enregistrés par vos soins peuvent être supprimés depuis votre système de fichiers. Désinstaller Boxmaker supprime l’application, mais ne supprime pas automatiquement les fichiers que vous avez exportés.
-
-Pour toute question concernant Boxmaker, utilisez les [issues du dépôt](https://github.com/Thomas-TP/BoxMaker/issues).
+Boxmaker's Swiss Post estimates are calculated in the app from published rates; the app does not send your box dimensions or weight to Swiss Post.

@@ -9,7 +9,7 @@ async (page) => {
   const complete = page.waitForEvent('download');
   await page.getByRole('button',{name:'Exporter les 3 pièces',exact:true}).click();
   const completeFile = await complete;
-  assert(completeFile.suggestedFilename() === 'boxmaker-complet-PLA.3mf', 'Complete export is a single 3MF');
+  assert(completeFile.suggestedFilename() === 'boxmaker-all-parts-PLA.3mf', 'Complete export is a single 3MF');
   await completeFile.saveAs('output/playwright/complete.3mf');
   await page.locator('.export.panel').screenshot({path:'output/playwright/combined-export.png'});
   for (const dims of [[100,70,30],[100,30,70],[70,100,30],[70,30,100],[30,100,70],[30,70,100]]) {

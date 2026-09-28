@@ -274,11 +274,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the final release.' }
           foreach ($asset in $release.assets) {
             $label = switch -Wildcard ($asset.name) {
-              'Boxmaker-Windows.exe' { 'Windows · installation Microsoft Store'; break }
-              "Boxmaker-$version-macOS.dmg" { 'macOS · Intel et Apple Silicon'; break }
-              'SHA256SUMS.txt' { 'Empreintes SHA-256'; break }
-              'releases.win*.json' { 'Mises à jour Windows · fichier technique'; break }
-              '*.nupkg' { 'Mises à jour Windows · paquet technique'; break }
+              'Boxmaker-Windows.exe' { 'Windows · Microsoft Store installer'; break }
+              "Boxmaker-$version-macOS.dmg" { 'macOS · Intel and Apple Silicon'; break }
+              'SHA256SUMS.txt' { 'SHA-256 checksums'; break }
+              'releases.win*.json' { 'Windows updates · metadata'; break }
+              '*.nupkg' { 'Windows updates · package'; break }
             }
             if ($label) {
               gh api -X PATCH "repos/$env:GH_REPO/releases/assets/$($asset.id)" -f "label=$label" | Out-Null

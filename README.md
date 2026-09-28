@@ -1,103 +1,103 @@
 <p align="center">
-  <img src="src-tauri/icons/128x128@2x.png" width="88" height="88" alt="Icône Boxmaker">
+  <img src="src-tauri/icons/128x128@2x.png" width="88" height="88" alt="Boxmaker app icon">
 </p>
 
 <h1 align="center">Boxmaker</h1>
 
 <p align="center">
-  <strong>Votre boîte d’expédition, dessinée pour votre objet.</strong><br>
-  Concevez-la en quelques gestes, découvrez-la en 3D, puis imprimez ses pièces.
+  <strong>A shipping box shaped around your object.</strong><br>
+  Enter its dimensions, inspect the box in 3D, and export the parts for printing.
 </p>
 
 <p align="center">
-  <strong>Windows x64 et ARM64 · macOS</strong> · Impression 3D en PLA · Expédition en Suisse
+  <strong>Windows x64 and ARM64 · macOS</strong> · PLA 3D printing · Shipping estimates for Switzerland
 </p>
 
 <p align="center">
   <a href="https://get.microsoft.com/installer/download/9MX7QLK05FJP?cid=github_readme">
-    <img src="https://get.microsoft.com/images/fr%20dark.svg" width="220" alt="Télécharger Boxmaker avec le Microsoft Store">
+    <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="220" alt="Get Boxmaker from Microsoft Store">
   </a>
   &nbsp;&nbsp;
-  <a href="https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Boxmaker-0.8.2-macOS.dmg">
-    <img src="assets/download-macos.svg" width="220" alt="Télécharger Boxmaker pour macOS">
+  <a href="https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.3/Boxmaker-0.8.3-macOS.dmg">
+    <img src="assets/download-macos.svg" width="220" alt="Download Boxmaker for macOS">
   </a>
 </p>
 
 <p align="center">
-  Windows : Intel/AMD et ARM64 · macOS : Intel et Apple Silicon
+  Windows: Intel, AMD, and ARM64 · Mac: Intel and Apple Silicon
   <br>
-  <a href="https://apps.microsoft.com/detail/9MX7QLK05FJP">Fiche Microsoft Store</a>
+  <a href="https://apps.microsoft.com/detail/9MX7QLK05FJP">Microsoft Store listing</a>
   ·
-  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.2">Notes de version et fichiers de vérification</a>
+  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.3">Release notes and checksums</a>
   ·
-  <a href="docs/UTILISATION.md">Guide d’utilisation</a>
+  <a href="docs/USER_GUIDE.md">User guide</a>
 </p>
 
 ---
 
 <p align="center">
-  <img src="store/screenshots/Boxmaker-atelier-1920x1080.png" width="960" alt="Atelier Boxmaker : dimensions, aperçu 3D, export et estimation d’expédition">
+  <img src="store/screenshots/Boxmaker-workspace-1920x1080.png" width="960" alt="Boxmaker workspace showing dimensions, a 3D preview, exports, and shipping estimates">
 </p>
 
-## De votre objet à une boîte prête à imprimer
+## From your object to a printable box
 
 | | |
 | --- | --- |
-| **📐 Sur mesure** | Entrez les dimensions et le poids de votre objet. Ajoutez du calage si nécessaire, puis ajustez la boîte à votre impression. |
-| **👀 Visible avant impression** | Tournez le modèle en 3D et passez des vues fermée, éclatée et ouverte aux pièces posées à plat. |
-| **🧩 Trois pièces, un fichier** | Exportez la boîte, le couvercle et le scellé imprimable dans un seul 3MF. Chaque pièce reste aussi disponible séparément. |
-| **📦 Pensé pour l’envoi** | Comparez les options de la Poste suisse avec les dimensions et le poids estimés, puis renseignez le poids réel après emballage. |
+| **📐 Made to fit** | Enter your object's dimensions and weight. Set the clearance and any extra padding you need. |
+| **👀 Preview before printing** | Rotate the 3D model and switch between closed, exploded, open, and print-layout views. |
+| **🧩 Three parts, one file** | Export the box, lid, and printable seal together in one 3MF. Each part is also available separately. |
+| **📦 Ready to plan a shipment** | Compare Swiss Post options using estimated dimensions and weight, then enter the actual weight of your packed box. |
 
 <p align="center">
-  <img src="store/screenshots/Boxmaker-pieces-1920x1080.png" width="960" alt="Vue des trois pièces de la boîte prêtes à être placées dans un logiciel de découpe">
+  <img src="store/screenshots/Boxmaker-parts-1920x1080.png" width="960" alt="The box, lid, and seal laid out as three separate printable parts">
 </p>
 
-## Comment ça marche ?
+## How it works
 
-1. **Décrivez votre objet.** Saisissez ses trois dimensions, son poids et le calage souhaité. Choisissez votre imprimante : Bambu Lab P1S ou Creality K2.
-2. **Ajustez votre boîte.** Inspectez le rendu 3D et les pièces. Boxmaker choisit automatiquement une orientation adaptée aux dimensions saisies.
-3. **Exportez et imprimez.** Téléchargez le 3MF des trois pièces ou des fichiers STL individuels, puis préparez l’impression dans votre logiciel de découpe.
-4. **Fermez et pesez.** Après impression, fermez la boîte et insérez le scellé imprimé. Pesez le colis terminé avant de choisir son affranchissement.
+1. **Describe your object.** Enter its three dimensions and weight, plus any padding. Choose a printer profile: Bambu Lab P1S or Creality K2.
+2. **Adjust the box.** Check the 3D preview and parts. Boxmaker selects a printable orientation for the dimensions you entered.
+3. **Export and print.** Save the complete three-part 3MF or individual STL/3MF files, then prepare the print in your slicer.
+4. **Seal and weigh.** After printing, close the box and insert the printable seal. Weigh the finished parcel before buying postage.
 
-[Voir le guide détaillé →](docs/UTILISATION.md)
+[Read the user guide →](docs/USER_GUIDE.md)
 
-## Installer Boxmaker
+## Install Boxmaker
 
-Cliquez sur le bouton correspondant à votre ordinateur. Sous Windows, l’installateur Web officiel est **signé par Microsoft**, nécessite Internet et choisit automatiquement la version x64 ou ARM64. Cette installation reçoit ses mises à jour depuis le Microsoft Store. Le même [installateur Windows est disponible dans la release GitHub](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.2/Boxmaker-Windows.exe).
+Choose the badge for your computer above. On Windows, the official web installer is **signed by Microsoft**, requires an internet connection, and selects x64 or ARM64 automatically. That installation receives updates from Microsoft Store. The same [Windows installer is attached to the GitHub release](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.3/Boxmaker-Windows.exe).
 
-**Mac : préversion non testée en conditions réelles.** Le DMG est gratuit, signé localement sans certificat Apple et non notarisé. Après l’avoir glissé dans Applications, macOS peut demander d’autoriser sa première ouverture dans **Réglages Système → Confidentialité et sécurité → Ouvrir quand même**. Les mises à jour Mac se téléchargent pour l’instant depuis les releases GitHub.
+**Mac: preview build, not yet tested on a physical Mac.** The DMG is free and has an ad hoc signature, but no Apple Developer certificate or notarization. After dragging Boxmaker to Applications, macOS may require you to allow the first launch in **System Settings → Privacy & Security → Open Anyway**. For now, download Mac updates from GitHub Releases.
 
-## Avant votre premier envoi
+## Before your first shipment
 
-> **Faites un essai réel.** Le scellé imprimé est encore un prototype mécanique : vérifiez sa fermeture et sa rupture sur votre imprimante avant de lui confier un colis. Les tarifs et masses affichés sont des estimations pour les envois intérieurs en Suisse ; pesez le paquet fermé et confirmez le tarif auprès de la Poste.
+> **Print and test a sample first.** The printable seal is still a mechanical prototype. Check how it closes and breaks with your printer and PLA before shipping anything valuable. Shipping rates and weights are estimates for domestic shipments within Switzerland. Weigh the closed parcel and confirm the final rate with Swiss Post.
 
 <details>
-<summary><strong>Le scellé est-il réutilisable ?</strong></summary>
+<summary><strong>Can I reuse the seal?</strong></summary>
 
-Le scellé est conçu pour se rompre à l’ouverture. Vous pouvez en imprimer un nouveau séparément depuis l’export des pièces.
+The seal is designed to break when opened. You can export and print a replacement seal separately.
 
 </details>
 
 <details>
-<summary><strong>Puis-je reprendre un projet plus tard ?</strong></summary>
+<summary><strong>Can I reopen a saved project?</strong></summary>
 
-Oui. Enregistrez votre projet sur votre ordinateur et rouvrez-le dans Boxmaker. Vos modèles et exports restent locaux.
+Yes. Save the project on your computer and open it again in Boxmaker. Projects and exports stay on your device.
 
 </details>
 
 <details>
-<summary><strong>Faut-il un compte pour créer une boîte ?</strong></summary>
+<summary><strong>Do I need an account?</strong></summary>
 
-Non. La conception et les exports fonctionnent localement, sans compte Boxmaker.
+No. Box design and export work locally without a Boxmaker account.
 
 </details>
 
 ---
 
 <p align="center">
-  <a href="https://github.com/Thomas-TP/BoxMaker/issues">Signaler un problème</a>
+  <a href="https://github.com/Thomas-TP/BoxMaker/issues">Report an issue</a>
   ·
-  <a href="docs/PRIVACY.md">Confidentialité</a>
+  <a href="docs/PRIVACY.md">Privacy</a>
   ·
-  <a href="docs/DEVELOPMENT.md">Documentation pour développeurs</a>
+  <a href="docs/DEVELOPMENT.md">Developer documentation</a>
 </p>
