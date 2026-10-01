@@ -1,0 +1,12 @@
+{
+  "description": "Créez une boîte d’expédition imprimable en PLA autour de votre objet. Saisissez ses dimensions et son poids, inspectez la boîte dans un aperçu 3D interactif, puis exportez la boîte, le couvercle et le scellé imprimé dans un seul 3MF ou dans des fichiers STL/3MF séparés.\n\nChoisissez les réglages Bambu Lab P1S ou Creality K2, ajoutez le jeu et le calage nécessaires et comparez les services estimés de la Poste pour les envois en Suisse. Pesez la boîte chargée avant l’affranchissement. Bambu Studio peut afficher un avertissement normal pour un 3MF créé hors de Bambu Studio : importez sa géométrie et choisissez vos réglages d’impression.\n\nBoxmaker est gratuit et open source sous licence MIT. Choisissez le français ou l’anglais, enregistrez vos projets localement et récupérez automatiquement votre dernier projet valide après un redémarrage. L’aperçu interactif fonctionne aussi sans WebGL ni accélération graphique. Aucun compte Boxmaker ni suivi d’utilisation n’est nécessaire. Cette installation Windows reçoit ses mises à jour depuis Microsoft Store.\n\nLe mainteneur a validé la fermeture imprimée, le scellé, le transport d’une boîte chargée et les exports Bambu Studio. Vérifiez votre impression et la protection adaptée au contenu. Le scellé indique une ouverture normale sans garantir l’inviolabilité. Les tarifs utilisent la grille publique 2026 et sont masqués après son expiration.",
+  "whatsNew": "Version 1.0 : première version stable. Aperçu 3D de secours sans WebGL, récupération automatique du dernier projet valide, validation du chargement des anciens projets, messages français/anglais plus clairs, modifications des paramètres plus fluides, explication de l’avertissement 3MF Bambu Studio et licence open source MIT. Paquets Windows x64 et ARM64 disponibles ; ARM64 n’a pas encore été testé sur un appareil utilisateur.",
+  "features": [
+    "Boîte PLA sur mesure avec couvercle coulissant et scellé imprimé",
+    "Un 3MF pour les trois pièces et exports STL/3MF séparés",
+    "Aperçu 3D interactif, même sans WebGL",
+    "Français et anglais, projets locaux avec récupération automatique",
+    "Estimation des services de la Poste et poids réel de l’envoi",
+    "Gratuit et open source sous licence MIT"
+  ]
+}

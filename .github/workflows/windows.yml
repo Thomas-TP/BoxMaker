@@ -54,6 +54,7 @@ jobs:
       - name: Create Velopack packages and checksums
         run: bun run package:windows -- -SkipBuild
       - name: Create unsigned MSIX for Microsoft Store submission
+        if: ${{ !contains(github.ref_name, '-') }}
         run: bun run package:msix -- -SkipBuild
       - name: Prepare public GitHub artifact without the unsigned Store package
         shell: pwsh
@@ -66,6 +67,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !contains(github.ref_name, '-') }}
         with:
           name: boxmaker-store-submission-x64
           path: artifacts/releases/*-x64-Store-submission-UNSIGNED.msix
@@ -112,6 +114,7 @@ jobs:
       - name: Create ARM64 Velopack packages
         run: bun run package:windows -- -SkipBuild -Architecture arm64
       - name: Create unsigned ARM64 MSIX for Microsoft Store
+        if: ${{ !contains(github.ref_name, '-') }}
         run: bun run package:msix -- -SkipBuild -Architecture arm64
       - name: Prepare public ARM64 artifacts
         shell: pwsh
@@ -125,6 +128,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !contains(github.ref_name, '-') }}
         with:
           name: boxmaker-store-submission-arm64
           path: artifacts/releases/*-arm64-Store-submission-UNSIGNED.msix

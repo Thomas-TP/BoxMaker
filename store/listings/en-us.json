@@ -1,0 +1,12 @@
+{
+  "description": "Design a 3D-printable PLA shipping box around your object. Enter its dimensions and weight, inspect the box in an interactive 3D preview, and export the box, lid and printable seal together in one 3MF or as individual STL/3MF files.\n\nChoose Bambu Lab P1S or Creality K2 settings, add clearance and padding, and compare estimated Swiss Post services for domestic shipments. Weigh the packed box before buying postage. Bambu Studio may display an expected warning for a 3MF created outside Bambu Studio: import its geometry and choose your own print settings.\n\nBoxmaker is free and open source under the MIT license. Use English or French, save projects locally, and recover your last valid project automatically after restarting. The interactive preview also works without WebGL or graphics acceleration. No Boxmaker account or analytics is required. Updates for this Windows installation are delivered through Microsoft Store.\n\nThe maintainer has tested the printed closure, seal, loaded-box transport and Bambu Studio exports. Check your own print and protection for your contents. The seal indicates normal opening, but does not guarantee tamper resistance. Shipping prices use the published 2026 rate table and are hidden after it expires.",
+  "whatsNew": "Version 1.0: first stable release. Interactive 3D fallback without WebGL, automatic recovery of the last valid project, validated loading of older projects, clearer English/French messages, more responsive parameter editing, a Bambu Studio 3MF import note, and the MIT open-source license. Windows x64 and ARM64 packages are available; ARM64 has not yet been tested on a user device.",
+  "features": [
+    "Custom-fit PLA box with sliding lid and printable opening seal",
+    "Complete three-part 3MF and individual STL/3MF exports",
+    "Interactive 3D preview, including computers without WebGL",
+    "English and French, saved locally with automatic project recovery",
+    "Swiss Post shipping estimates and measured parcel weight",
+    "Free and open source under the MIT license"
+  ]
+}

@@ -15,6 +15,7 @@ interface Props {
 export function Viewer({ design, mode, showObject, reset, opening }: Props) {
   const mount = useRef<HTMLElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const unavailableWebGL = useRef(false);
   const [software, setSoftware] = useState(false);
   const [forceSoftware, setForceSoftware] = useState(false);
   const viewRef = useRef<{
@@ -40,12 +41,14 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     const host = mount.current;
     let renderer: THREE.WebGLRenderer | SVGRenderer;
     try {
-      if (forceSoftware) throw new Error("Software preview requested");
+      if (forceSoftware || unavailableWebGL.current)
+        throw new Error("Software preview requested");
       renderer =
         rendererRef.current ??
         new THREE.WebGLRenderer({ antialias: true, alpha: true });
       rendererRef.current = renderer;
     } catch {
+      unavailableWebGL.current = true;
       renderer = new SVGRenderer();
       renderer.setQuality("low");
       renderer.setPrecision(2);
@@ -134,7 +137,7 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
         : THREE.MeshLambertMaterial;
       const material = new Material({
         color: [0x6088ed, 0xa9c0f5, 0xe6b678][index],
-        side: THREE.DoubleSide,
+        side: accelerated ? THREE.DoubleSide : THREE.FrontSide,
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.castShadow = true;
@@ -226,7 +229,7 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
       0x27364b,
     );
     grid.position.y = -0.3;
-    scene.add(grid);
+    if (accelerated) scene.add(grid);
     objects.push(grid);
     sun.shadow.camera.left = -extent * 2;
     sun.shadow.camera.right = extent * 2;
