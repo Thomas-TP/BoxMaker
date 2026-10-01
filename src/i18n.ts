@@ -1,14 +1,13 @@
 import { Children, cloneElement, isValidElement, type ReactNode } from "react";
+import { readSetting, writeSetting } from "./storage";
 
 export type Language = "fr" | "en";
-const stored =
-  typeof localStorage === "undefined"
-    ? null
-    : localStorage.getItem("boxmaker-language");
+const stored = readSetting("boxmaker-language");
 let language: Language =
   stored === "fr" || stored === "en"
     ? stored
-    : navigator.language.toLowerCase().startsWith("fr")
+    : typeof navigator !== "undefined" &&
+        navigator.language?.toLowerCase().startsWith("fr")
       ? "fr"
       : "en";
 if (typeof document !== "undefined") document.documentElement.lang = language;
@@ -18,11 +17,79 @@ export function getLanguage(): Language {
 }
 export function setLanguage(value: Language) {
   language = value;
-  localStorage.setItem("boxmaker-language", value);
-  document.documentElement.lang = value;
+  writeSetting("boxmaker-language", value);
+  if (typeof document !== "undefined") document.documentElement.lang = value;
 }
 
-const english: Record<string, string> = {
+export const english: Record<string, string> = {
+  ". L’objet est centré dans cet espace.":
+    ". The object is centred in this space.",
+  "Bambu Studio peut signaler que ce 3MF ne provient pas de Bambu Studio. C’est normal : importez la géométrie et choisissez vos réglages d’impression.":
+    "Bambu Studio may warn that this 3MF was not created by Bambu Studio. This is expected: import the geometry and select your print settings.",
+  "Adaptez le calage à votre objet et vérifiez votre impression. Les dimensions intérieures annoncées correspondent à l’espace libre sous le couvercle, entre les renforts.":
+    "Adapt the padding to your object and check your print. The stated internal dimensions describe the free space beneath the lid, between reinforcements.",
+  "Boxmaker est un logiciel libre sous licence MIT.":
+    "Boxmaker is open-source software licensed under MIT.",
+  "Paroi (mm)": "Wall thickness (mm)",
+  "Fond (mm)": "Base thickness (mm)",
+  "Aperçu compatible · sans accélération graphique":
+    "Compatible preview · no graphics acceleration",
+  "Votre dernier projet a été récupéré automatiquement.":
+    "Your last project was recovered automatically.",
+  "Le brouillon n’a pas pu être récupéré. Ouvrez votre dernier fichier enregistré.":
+    "The draft could not be recovered. Open your last saved project file.",
+  "La récupération automatique est indisponible. Enregistrez votre projet dans un fichier.":
+    "Automatic recovery is unavailable. Save your project to a file.",
+  "Le fichier n’est pas un projet JSON valide.":
+    "This file is not a valid JSON project.",
+  "Ce projet nécessite une version plus récente de Boxmaker. Mettez l’application à jour.":
+    "This project needs a newer version of Boxmaker. Update the app.",
+  "Le projet est incomplet ou contient des paramètres non valides.":
+    "This project is incomplete or contains invalid parameters.",
+  "Impossible de lire le projet.": "Could not read the project.",
+  "Paramètres manquants": "Missing parameters",
+  "Paramètres invalides : vérifiez les valeurs saisies.":
+    "Invalid parameters: check the values you entered.",
+  "Impossible d’écrire le fichier. Choisissez un dossier accessible et vérifiez l’espace disque.":
+    "Could not write the file. Choose an accessible folder and check free disk space.",
+  "Les mises à jour intégrées sont disponibles dans l’application installée.":
+    "In-app updates are available in the installed application.",
+  "Une mise à jour est disponible. Ouvrez Mises à jour pour l’installer.":
+    "An update is available. Open Updates to install it.",
+  "Version installée · stable": "Installed version · stable",
+  "Rejoindre la bêta": "Join the beta",
+  "Recevez les nouveautés avant leur sortie stable. Elles peuvent contenir des problèmes.":
+    "Try new features before the stable release. They may contain issues.",
+  "Cette installation Microsoft Store reste sur le canal stable. Le choix bêta est disponible sur macOS et dans les installations Windows Velopack.":
+    "This Microsoft Store installation stays on the stable channel. Beta selection is available on macOS and in Windows Velopack installations.",
+  "Canal bêta : versions stables et préversions.":
+    "Beta channel: stable and prerelease versions.",
+  "Canal stable : uniquement les versions stables.":
+    "Stable channel: stable releases only.",
+  "Quitter la bêta ne réinstalle pas une ancienne version. Vous recevrez la prochaine version stable plus récente.":
+    "Leaving the beta does not reinstall an older version. You will receive the next newer stable release.",
+  "Vérifier au lancement": "Check on startup",
+  "Contacte GitHub pour rechercher une mise à jour. L’installation et le redémarrage restent votre choix.":
+    "Contacts GitHub to check for updates. You choose when to install and restart.",
+  "La mise à jour est prête. L’application va redémarrer ; le dernier brouillon valide sera récupéré automatiquement.":
+    "The update is ready. The app will restart and automatically recover your last valid draft.",
+  "Vérification impossible : vérifiez votre connexion puis réessayez.":
+    "Could not check for updates. Check your connection and try again.",
+  "Téléchargement impossible : vérifiez votre connexion et l’espace disque, puis réessayez.":
+    "Download failed. Check your connection and free disk space, then try again.",
+  "Installation impossible : fermez les autres instances de Boxmaker et réessayez.":
+    "Installation failed. Close other instances of Boxmaker and try again.",
+  "Installation impossible : placez Boxmaker dans Applications et vérifiez les permissions du dossier.":
+    "Installation failed. Move Boxmaker to Applications and check the folder permissions.",
+  "Installation impossible : réessayez ou téléchargez le DMG depuis GitHub.":
+    "Installation failed. Try again or download the DMG from GitHub.",
+  "Le service de mise à jour n’a pas pu démarrer.":
+    "The update service could not start.",
+  "Le service de mise à jour a renvoyé une réponse non valide.":
+    "The update service returned an invalid response.",
+  "Version de mise à jour non valide.": "Invalid update version.",
+  "Le canal a changé. Vérifiez à nouveau les mises à jour.":
+    "The channel changed. Check for updates again.",
   Inconnu: "Unknown",
   "Atelier de création": "Design studio",
   Exporter: "Export",
@@ -320,12 +387,12 @@ const english: Record<string, string> = {
     "Weight is estimated from PLA volume (1.24 g/cm³). Use the closed parcel's measured weight before buying postage.",
   "P1S : contrôlez aussi les zones exclues et la ligne de purge du profil Bambu Studio ; la marge rectangulaire ne les modélise pas.":
     "P1S: also check the excluded zones and purge line in Bambu Studio; the rectangular margin does not model them.",
-  "Scellé imprimé expérimental : insérez le petit verrou vertical dans le coin arrière après avoir chargé et fermé la boîte. Rompez sa tête avant d’appuyer puis de faire glisser le couvercle. Vérifiez l’enclenchement, la rupture et la tenue sur une impression réelle avant tout envoi.":
-    "Experimental printable seal: insert the small vertical latch in the rear corner after filling and closing the box. Break its head before pressing and sliding the lid. Test engagement, breakage and retention on a real print before shipping.",
+  "Scellé imprimé : insérez le petit verrou vertical dans le coin arrière après avoir chargé et fermé la boîte. Rompez sa tête avant d’appuyer puis de faire glisser le couvercle. Vérifiez votre impression avant l’envoi.":
+    "Printable seal: insert the small vertical latch in the rear corner after filling and closing the box. Break its head before pressing and sliding the lid. Check your print before shipping.",
   "Le scellé gêne l’ouverture discrète par la fermeture normale ; il ne garantit pas l’inviolabilité et peut être remplacé ou contourné en endommageant la boîte.":
     "The seal makes discreet opening through the normal closure harder; it does not guarantee tamper resistance and can be replaced or bypassed by damaging the box.",
-  "Fermeture à pression : imprimez d’abord l’essai, vérifiez le clic et l’ouverture sans forcer. La durée de vie du ressort PLA et la résistance au transport restent à tester ; scellez l’envoi avec un adhésif.":
-    "Press latch: print a test first and check the snap and opening without force. PLA spring life and shipping resistance still need testing; secure the parcel with tape.",
+  "Fermeture à pression : vérifiez le clic, la retenue et l’ouverture sur votre impression. Activez le scellé imprimé si vous souhaitez un témoin d’ouverture.":
+    "Press latch: check engagement, retention and opening on your print. Enable the printable seal if you want an opening indicator.",
   "Boîte : fond posé au plateau. Couvercle : face lisse dessous, nervures et bouton dessus. Contrôlez le petit pont du verrou et les lèvres des rails dans le slicer.":
     "Box: place the base on the bed. Lid: smooth face down, ribs and button up. Check the latch bridge and rail lips in your slicer.",
   "Petit objet : la cavité est agrandie uniquement selon l’espace nécessaire à la languette calculée. Le supplément est détaillé sous l’aperçu.":

@@ -54,6 +54,7 @@ jobs:
       - name: Create Velopack packages and checksums
         run: bun run package:windows -- -SkipBuild
       - name: Create unsigned MSIX for Microsoft Store submission
+        if: ${{ !contains(github.ref_name, '-') }}
         run: bun run package:msix -- -SkipBuild
       - name: Prepare public GitHub artifact without the unsigned Store package
         shell: pwsh
@@ -66,6 +67,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !contains(github.ref_name, '-') }}
         with:
           name: boxmaker-store-submission-x64
           path: artifacts/releases/*-x64-Store-submission-UNSIGNED.msix
@@ -112,6 +114,7 @@ jobs:
       - name: Create ARM64 Velopack packages
         run: bun run package:windows -- -SkipBuild -Architecture arm64
       - name: Create unsigned ARM64 MSIX for Microsoft Store
+        if: ${{ !contains(github.ref_name, '-') }}
         run: bun run package:msix -- -SkipBuild -Architecture arm64
       - name: Prepare public ARM64 artifacts
         shell: pwsh
@@ -125,6 +128,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !contains(github.ref_name, '-') }}
         with:
           name: boxmaker-store-submission-arm64
           path: artifacts/releases/*-arm64-Store-submission-UNSIGNED.msix
@@ -132,7 +136,7 @@ jobs:
           retention-days: 14
 
   macos:
-    name: Build macOS universal DMG (untested)
+    name: Build macOS universal DMG and updater
     runs-on: macos-15-intel
     timeout-minutes: 55
     steps:
@@ -151,13 +155,21 @@ jobs:
       - name: Restore dependencies
         run: bun install --frozen-lockfile
       - name: Check macOS geometry engine
-        run: cargo test -p boxmaker-core --locked
+        run: cargo test --workspace --locked
       - name: Build universal DMG with ad hoc signature
         env:
           # manifold-csg-sys invokes CMake directly; without this, its native
           # libraries use the Intel runner architecture even for Rust arm64.
           CMAKE_OSX_ARCHITECTURES: arm64;x86_64
-        run: bunx tauri build --config src-tauri/tauri.macos.conf.json --target universal-apple-darwin --bundles dmg
+          TAURI_SIGNING_PRIVATE_KEY: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            test -n "$TAURI_SIGNING_PRIVATE_KEY"
+            bunx tauri build --config src-tauri/tauri.macos.conf.json --target universal-apple-darwin --bundles dmg
+          else
+            bunx tauri build --config src-tauri/tauri.macos.conf.json --config '{"bundle":{"createUpdaterArtifacts":false}}' --target universal-apple-darwin --bundles dmg
+          fi
       - name: Verify bundle and disk image
         shell: bash
         run: |
@@ -177,10 +189,13 @@ jobs:
           mkdir -p artifacts/mac-release
           version="$(node -p "require('./package.json').version")"
           cp "${images[0]}" "artifacts/mac-release/Boxmaker-${version}-macOS.dmg"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            bun scripts/prepare-macos-updater.ts
+          fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: boxmaker-macos-universal
-          path: artifacts/mac-release/*.dmg
+          path: artifacts/mac-release/*
           if-no-files-found: error
           retention-days: 14
 
@@ -270,7 +285,7 @@ jobs:
           }
           $macDmg = @(Get-ChildItem -LiteralPath artifacts/mac-release -Filter '*.dmg' -File)
           if ($macDmg.Count -ne 1) { throw 'One macOS DMG is required.' }
-          Copy-Item -LiteralPath $macDmg[0].FullName -Destination artifacts/public-release
+          Get-ChildItem -LiteralPath artifacts/mac-release -File | Copy-Item -Destination artifacts/public-release
           Get-ChildItem -LiteralPath artifacts/public-release-arm64 -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | Copy-Item -Destination artifacts/public-release
           & ./scripts/checksums.ps1 -Directory artifacts/public-release
           $assets = @(Get-ChildItem -LiteralPath artifacts/public-release -File | ForEach-Object { $_.FullName })
@@ -279,7 +294,7 @@ jobs:
           # The by-tag API returns 404 for a draft release; the release list includes it.
           $release = @(gh api "repos/$env:GH_REPO/releases?per_page=100" | ConvertFrom-Json | Where-Object { $_.tag_name -eq $env:RELEASE_TAG })
           if ($LASTEXITCODE -ne 0 -or $release.Count -ne 1) { throw 'Could not inspect the draft release.' }
-          $expectedAssets = @('Boxmaker-Windows.exe', "Boxmaker-$version-macOS.dmg", 'SHA256SUMS.txt', 'releases.win.json', 'releases.win-arm64.json')
+          $expectedAssets = @('Boxmaker-Windows.exe', "Boxmaker-$version-macOS.dmg", "Boxmaker-$version-macOS-update.tar.gz", 'mac-updater.json', 'SHA256SUMS.txt', 'releases.win.json', 'releases.win-arm64.json')
           foreach ($name in $expectedAssets) {
             if ($name -notin @($release[0].assets | ForEach-Object { $_.name })) { throw "Missing release asset: $name" }
           }
@@ -287,6 +302,8 @@ jobs:
             $label = switch -Wildcard ($asset.name) {
               'Boxmaker-Windows.exe' { 'Windows · Microsoft Store installer'; break }
               "Boxmaker-$version-macOS.dmg" { 'macOS · Intel and Apple Silicon'; break }
+              '*-macOS-update.tar.gz' { 'macOS updates · package (not an installer)'; break }
+              'mac-updater.json' { 'macOS updates · signed manifest'; break }
               'SHA256SUMS.txt' { 'SHA-256 checksums'; break }
               'releases.win*.json' { 'Windows updates · metadata'; break }
               '*.nupkg' { 'Windows updates · package'; break }
@@ -298,5 +315,6 @@ jobs:
           }
           $edit = @('release', 'edit', $env:RELEASE_TAG, '--draft=false', '--notes-file', "docs/releases/$env:RELEASE_TAG.md")
           if ($preview) { $edit += @('--prerelease', '--latest=false') }
+          else { $edit += @('--prerelease=false', '--latest=true') }
           gh @edit
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed.' }

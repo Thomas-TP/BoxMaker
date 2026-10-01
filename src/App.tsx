@@ -31,6 +31,12 @@ import {
   tr,
 } from "./i18n";
 import { Modal } from "./Modal";
+import {
+  draftKey,
+  projectFileError,
+  readSetting,
+  writeSetting,
+} from "./storage";
 import type { Design, Params } from "./types";
 import { defaults, download, engine } from "./types";
 import { Updates } from "./Updates";
@@ -93,6 +99,9 @@ function Field({
 export default function App() {
   const [language, setLanguageState] = useState<Language>(getLanguage);
   const [params, setParams] = useState<Params>(defaults);
+  const [draft] = useState(() => readSetting(draftKey));
+  const [hydrating, setHydrating] = useState(!!draft);
+  const storageWarning = useRef(false);
   const [design, setDesign] = useState<Design | null>(null);
   const [mode, setMode] = useState<"assembled" | "exploded" | "print" | "open">(
     "exploded",
@@ -110,6 +119,10 @@ export default function App() {
   const [updatesOpen, setUpdatesOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const sequence = useRef(0);
+  const calculationRunning = useRef(false);
+  const pendingCalculation = useRef<{ params: Params; id: number } | null>(
+    null,
+  );
   const upload = useRef<HTMLInputElement>(null);
   const set = <K extends keyof Params>(key: K, value: Params[K]) =>
     setParams((p) => ({
@@ -136,33 +149,83 @@ export default function App() {
     document.documentElement.lang = language;
   }, [language]);
   useEffect(() => {
+    if (!draft) return;
+    let active = true;
+    void (async () => {
+      try {
+        if (draft.length > 32768) throw new Error("Fichier trop volumineux");
+        const restored = await engine<{ params: Params; message: string }>(
+          "load-project",
+          defaults,
+          { project: JSON.parse(draft) },
+        );
+        if (active) {
+          setParams(restored.params);
+          setNotice("Votre dernier projet a été récupéré automatiquement.");
+        }
+      } catch {
+        if (active)
+          setNotice(
+            "Le brouillon n’a pas pu être récupéré. Ouvrez votre dernier fichier enregistré.",
+          );
+      } finally {
+        if (active) setHydrating(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [draft]);
+  useEffect(() => {
+    if (hydrating) return;
     const id = ++sequence.current;
     setBusy(true);
     setError("");
-    const timer = setTimeout(() => {
-      engine<Design>("calculate", params)
-        .then((result) => {
-          if (id === sequence.current) {
+    const timer = setTimeout(async () => {
+      pendingCalculation.current = { params, id };
+      if (calculationRunning.current) return;
+      calculationRunning.current = true;
+      try {
+        while (pendingCalculation.current) {
+          const next = pendingCalculation.current;
+          pendingCalculation.current = null;
+          try {
+            const result = await engine<Design>("calculate", next.params);
+            if (next.id !== sequence.current) continue;
             setDesign(result);
             setPart((current) =>
               current === "all" || result.parts.some((p) => p.id === current)
                 ? current
                 : "body",
             );
+            if (
+              !writeSetting(
+                draftKey,
+                JSON.stringify({ version: 5, params: next.params }),
+              ) &&
+              !storageWarning.current
+            ) {
+              storageWarning.current = true;
+              setNotice(
+                "La récupération automatique est indisponible. Enregistrez votre projet dans un fichier.",
+              );
+            }
+          } catch (e) {
+            if (next.id === sequence.current) setError(projectFileError(e));
+          } finally {
+            if (next.id === sequence.current) setBusy(false);
           }
-        })
-        .catch((e: unknown) => {
-          if (id === sequence.current) setError(String(e));
-        })
-        .finally(() => {
-          if (id === sequence.current) setBusy(false);
-        });
+        }
+      } finally {
+        calculationRunning.current = false;
+      }
     }, 180);
     return () => {
       clearTimeout(timer);
+      pendingCalculation.current = null;
       sequence.current++;
     };
-  }, [params]);
+  }, [params, hydrating]);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(""), 5000);
@@ -209,33 +272,17 @@ export default function App() {
     if (!file) return;
     try {
       if (file.size > 32768) throw new Error("Fichier trop volumineux");
-      const project = JSON.parse(await file.text());
-      if (![1, 2, 3, 4, 5].includes(project.version) || !project.params)
-        throw new Error("Projet Boxmaker incompatible");
-      const loaded = {
-        ...project.params,
-        objectClearance:
-          project.params.objectClearance ?? defaults.objectClearance,
-        model: project.params.model ?? "legacy",
-        seal: project.params.seal ?? false,
-      };
-      const migrated = loaded.model === "press-slide" && project.version < 3;
-      const compactSeal =
-        loaded.model === "press-slide" && loaded.seal && project.version < 5;
-      if (migrated || compactSeal) loaded.measuredTotal = null;
-      await engine<Design>("calculate", loaded);
-      setParams(loaded);
+      const loaded = await engine<{ params: Params; message: string }>(
+        "load-project",
+        defaults,
+        { project: JSON.parse(await file.text()) },
+      );
+      setParams(loaded.params);
       setMode("exploded");
       setOpening(0);
-      setNotice(
-        migrated
-          ? "Projet adapté à la nouvelle fermeture et orienté automatiquement. Repesez l’envoi."
-          : compactSeal
-            ? "Scellé compact actualisé. Repesez l’envoi avant expédition."
-            : "Projet chargé.",
-      );
+      setNotice(loaded.message);
     } catch (e) {
-      setNotice(`Ouverture impossible : ${String(e)}`);
+      setNotice(`Ouverture impossible : ${projectFileError(e)}`);
     }
   }
   const stale = busy || !!error;
@@ -243,7 +290,8 @@ export default function App() {
   const selectedPart = design?.parts.find((p) => p.id === part);
   const allFit = design?.parts.every((p) => p.fits);
   const tariffExpired = design
-    ? new Date().toISOString().slice(0, 10) > design.tariffValidUntil
+    ? new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Zurich" }) >
+      design.tariffValidUntil
     : false;
   return localizeTree(
     <div className="app-shell">
@@ -942,6 +990,13 @@ export default function App() {
                 </>
               )}
             </p>
+            {format === "3mf" && (
+              <p className="bambu-note">
+                Bambu Studio peut signaler que ce 3MF ne provient pas de Bambu
+                Studio. C’est normal : importez la géométrie et choisissez vos
+                réglages d’impression.
+              </p>
+            )}
           </section>
           <section className={`shipping panel ${stale ? "muted" : ""}`}>
             <div className="panel-heading">
@@ -1173,10 +1228,11 @@ export default function App() {
             </tbody>
           </table>
           <p>
-            La boîte est un prototype, pas un emballage homologué. Les
+            Adaptez le calage à votre objet et vérifiez votre impression. Les
             dimensions intérieures annoncées correspondent à l’espace libre sous
             le couvercle, entre les renforts.
           </p>
+          <p>Boxmaker est un logiciel libre sous licence MIT.</p>
           <p>
             <a
               href="https://www.post.ch/fr/expedier-des-lettres/lettres-suisse"
@@ -1209,7 +1265,15 @@ export default function App() {
         onClose={() => setUpdatesOpen(false)}
         title="Mises à jour"
       >
-        <Updates saveProject={saveProject} canSave={!stale} />
+        <Updates
+          saveProject={saveProject}
+          canSave={!stale}
+          onAvailable={() =>
+            setNotice(
+              "Une mise à jour est disponible. Ouvrez Mises à jour pour l’installer.",
+            )
+          }
+        />
       </Modal>
     </div>,
   );

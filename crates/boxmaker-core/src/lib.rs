@@ -2,6 +2,7 @@ mod export;
 mod mesh;
 mod postal;
 mod press_slide;
+mod project;
 mod seal;
 mod spring;
 
@@ -153,7 +154,7 @@ fn orient(p: &Params, plate: [f64; 3]) -> [f64; 3] {
         .unwrap()
 }
 
-pub fn calculate(p: &Params) -> Result<Design, String> {
+fn validate(p: &Params) -> Result<[f64; 3], String> {
     for v in p.object {
         range(v, 10., 2500., "Dimension de l’objet (mm)")?;
     }
@@ -182,11 +183,15 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
     if let Some(w) = p.measured_total {
         range(w, 0.1, 100000., "Poids total mesuré (g)")?;
     }
-    let volume = match p.printer.as_str() {
-        "p1s" => [256.; 3],
-        "k2" => [260.; 3],
-        _ => return Err("Imprimante inconnue".into()),
-    };
+    match p.printer.as_str() {
+        "p1s" => Ok([256.; 3]),
+        "k2" => Ok([260.; 3]),
+        _ => Err("Imprimante inconnue".into()),
+    }
+}
+
+pub fn calculate(p: &Params) -> Result<Design, String> {
+    let volume = validate(p)?;
     let effective = Params {
         object: if p.model == "press-slide" {
             orient(p, volume)
@@ -274,10 +279,10 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
     }
     if p.model == "press-slide" {
         if p.seal {
-            warnings.push("Scellé imprimé expérimental : insérez le petit verrou vertical dans le coin arrière après avoir chargé et fermé la boîte. Rompez sa tête avant d’appuyer puis de faire glisser le couvercle. Vérifiez l’enclenchement, la rupture et la tenue sur une impression réelle avant tout envoi.".into());
+            warnings.push("Scellé imprimé : insérez le petit verrou vertical dans le coin arrière après avoir chargé et fermé la boîte. Rompez sa tête avant d’appuyer puis de faire glisser le couvercle. Vérifiez votre impression avant l’envoi.".into());
             warnings.push("Le scellé gêne l’ouverture discrète par la fermeture normale ; il ne garantit pas l’inviolabilité et peut être remplacé ou contourné en endommageant la boîte.".into());
         } else {
-            warnings.push("Fermeture à pression : imprimez d’abord l’essai, vérifiez le clic et l’ouverture sans forcer. La durée de vie du ressort PLA et la résistance au transport restent à tester ; scellez l’envoi avec un adhésif.".into());
+            warnings.push("Fermeture à pression : vérifiez le clic, la retenue et l’ouverture sur votre impression. Activez le scellé imprimé si vous souhaitez un témoin d’ouverture.".into());
         }
         warnings.push("Boîte : fond posé au plateau. Couvercle : face lisse dessous, nervures et bouton dessus. Contrôlez le petit pont du verrou et les lèvres des rails dans le slicer.".into());
         if inner[0] > p.object[0] + 2. * (p.padding + p.object_clearance) + 0.01
@@ -325,15 +330,22 @@ pub fn calculate(p: &Params) -> Result<Design, String> {
 #[serde(deny_unknown_fields)]
 struct Request {
     action: String,
-    params: Params,
+    params: Option<Params>,
     part: Option<String>,
     format: Option<String>,
+    project: Option<serde_json::Value>,
 }
 
 pub fn dispatch(input: &str) -> Result<String, String> {
-    let request: Request =
-        serde_json::from_str(input).map_err(|e| format!("Paramètres invalides : {e}"))?;
-    let design = calculate(&request.params)?;
+    let request: Request = serde_json::from_str(input)
+        .map_err(|_| "Paramètres invalides : vérifiez les valeurs saisies.".to_string())?;
+    if request.action == "load-project" {
+        return serde_json::to_string(&project::load(
+            request.project.ok_or("Projet Boxmaker incompatible")?,
+        )?)
+        .map_err(|_| "Impossible de lire le projet.".into());
+    }
+    let design = calculate(&request.params.ok_or("Paramètres manquants")?)?;
     match request.action.as_str() {
         "calculate" => serde_json::to_string(&design).map_err(|e| e.to_string()),
         "export" => {

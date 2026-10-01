@@ -93,7 +93,7 @@ export const defaults: Params = {
 export async function engine<T>(
   action: string,
   params: Params,
-  extras: Record<string, string> = {},
+  extras: Record<string, unknown> = {},
 ): Promise<T> {
   const request = JSON.stringify({ action, params, ...extras });
   if ("__TAURI_INTERNALS__" in window) {

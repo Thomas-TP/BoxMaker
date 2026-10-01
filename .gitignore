@@ -10,4 +10,6 @@ output/
 result.json
 .env
 .env.*
+*.key
+*.key.pub
 !.env.example

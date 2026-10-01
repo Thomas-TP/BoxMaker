@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { SVGRenderer } from "three/addons/renderers/SVGRenderer.js";
 import { localizeTree } from "./i18n";
 import type { Design } from "./types";
 
@@ -14,6 +15,9 @@ interface Props {
 export function Viewer({ design, mode, showObject, reset, opening }: Props) {
   const mount = useRef<HTMLElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const unavailableWebGL = useRef(false);
+  const [software, setSoftware] = useState(false);
+  const [forceSoftware, setForceSoftware] = useState(false);
   const viewRef = useRef<{
     design: Design;
     mode: Props["mode"];
@@ -35,38 +39,47 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     void reset; // Explicit user request to reconstruct and recenter the camera.
     if (!mount.current || !design) return;
     const host = mount.current;
-    let renderer: THREE.WebGLRenderer;
+    let renderer: THREE.WebGLRenderer | SVGRenderer;
     try {
+      if (forceSoftware || unavailableWebGL.current)
+        throw new Error("Software preview requested");
       renderer =
         rendererRef.current ??
         new THREE.WebGLRenderer({ antialias: true, alpha: true });
       rendererRef.current = renderer;
     } catch {
-      setError(
-        "L’aperçu nécessite WebGL. Les calculs et exports restent disponibles.",
-      );
-      return;
+      unavailableWebGL.current = true;
+      renderer = new SVGRenderer();
+      renderer.setQuality("low");
+      renderer.setPrecision(2);
     }
+    const accelerated = renderer instanceof THREE.WebGLRenderer;
+    setSoftware(!accelerated);
     setError("");
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.setClearColor(0x000000, 0);
+    if (renderer instanceof THREE.WebGLRenderer) {
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.setClearColor(0x000000, 0);
+    } else {
+      renderer.setClearColor(new THREE.Color(0x1b2b43), 0);
+    }
     host.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 20000);
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
+    controls.enableDamping = accelerated;
     controls.maxPolarAngle = Math.PI / 2 + 0.08;
     const objects: THREE.Object3D[] = [];
     scene.add(new THREE.HemisphereLight(0xffffff, 0x7085a5, 3));
-    const sun = new THREE.DirectionalLight(0xffffff, 4);
+    if (!accelerated) scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const sun = new THREE.DirectionalLight(0xffffff, accelerated ? 4 : 0.65);
     sun.position.set(150, 350, 200);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     scene.add(sun);
-    const fill = new THREE.DirectionalLight(0xdce8ff, 2);
+    const fill = new THREE.DirectionalLight(0xdce8ff, accelerated ? 2 : 0.3);
     fill.position.set(-200, 100, -100);
     scene.add(fill);
     const model = new THREE.Group();
@@ -119,11 +132,12 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
       const geometry = indexed.toNonIndexed();
       indexed.dispose();
       geometry.computeVertexNormals();
-      const material = new THREE.MeshStandardMaterial({
+      const Material = accelerated
+        ? THREE.MeshStandardMaterial
+        : THREE.MeshLambertMaterial;
+      const material = new Material({
         color: [0x6088ed, 0xa9c0f5, 0xe6b678][index],
-        roughness: 0.78,
-        metalness: 0.02,
-        side: THREE.DoubleSide,
+        side: accelerated ? THREE.DoubleSide : THREE.FrontSide,
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.castShadow = true;
@@ -166,11 +180,13 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     }
     if (showObject && mode !== "print") {
       const geometry = new THREE.BoxGeometry(...design.orientedObject);
-      const material = new THREE.MeshStandardMaterial({
+      const Material = accelerated
+        ? THREE.MeshStandardMaterial
+        : THREE.MeshLambertMaterial;
+      const material = new Material({
         color: 0xd1aa7c,
         transparent: true,
         opacity: mode === "assembled" ? 0.2 : 0.7,
-        roughness: 0.8,
         depthWrite: false,
       });
       const mesh = new THREE.Mesh(geometry, material);
@@ -204,7 +220,7 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.2;
     ground.receiveShadow = true;
-    scene.add(ground);
+    if (accelerated) scene.add(ground);
     objects.push(ground);
     const grid = new THREE.GridHelper(
       Math.ceil(extent / 10) * 30,
@@ -213,7 +229,7 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
       0x27364b,
     );
     grid.position.y = -0.3;
-    scene.add(grid);
+    if (accelerated) scene.add(grid);
     objects.push(grid);
     sun.shadow.camera.left = -extent * 2;
     sun.shadow.camera.right = extent * 2;
@@ -248,15 +264,27 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
     } else {
       fit();
     }
-    const observer = new ResizeObserver(resize);
-    observer.observe(host);
     let frame = 0;
-    const animate = () => {
-      frame = requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
+    const render = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        controls.update();
+        renderer.render(scene, camera);
+      });
     };
-    animate();
+    controls.addEventListener("change", render);
+    const renderObserver = new ResizeObserver(() => {
+      resize();
+      render();
+    });
+    renderObserver.observe(host);
+    const contextLost = (event: Event) => {
+      event.preventDefault();
+      setForceSoftware(true);
+    };
+    renderer.domElement.addEventListener("webglcontextlost", contextLost);
+    render();
     return () => {
       viewRef.current = {
         design,
@@ -266,7 +294,9 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
         target: controls.target.clone(),
       };
       cancelAnimationFrame(frame);
-      observer.disconnect();
+      renderObserver.disconnect();
+      controls.removeEventListener("change", render);
+      renderer.domElement.removeEventListener("webglcontextlost", contextLost);
       controls.dispose();
       for (const object of objects) {
         if (
@@ -281,8 +311,9 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
         }
       }
       sun.shadow.dispose();
+      renderer.domElement.remove();
     };
-  }, [design, mode, showObject, reset, opening]);
+  }, [design, mode, showObject, reset, opening, forceSoftware]);
   return localizeTree(
     <section
       className="three-view"
@@ -290,6 +321,11 @@ export function Viewer({ design, mode, showObject, reset, opening }: Props) {
       aria-label="Aperçu 3D interactif de la boîte"
     >
       {error && <p className="viewer-error">{error}</p>}
+      {software && (
+        <span className="software-preview" role="status">
+          Aperçu compatible · sans accélération graphique
+        </span>
+      )}
     </section>,
   );
 }

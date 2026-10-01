@@ -38,6 +38,7 @@ $output = if ($OutputDir) { $OutputDir } else { Join-Path $projectRoot 'artifact
 New-Item -ItemType Directory -Path $stage,(Join-Path $stage 'Assets'),$output -Force | Out-Null
 $targetRoot = if ($env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR } else { Join-Path $projectRoot 'target' }
 Copy-Item -LiteralPath (Join-Path $targetRoot 'release\boxmaker.exe') -Destination (Join-Path $stage 'Boxmaker.exe') -Force
+Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $stage -Force
 foreach ($name in @('StoreLogo', 'Square150x150Logo', 'Square44x44Logo')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot "src-tauri\icons\$name.png") -Destination (Join-Path $stage 'Assets') -Force
 }

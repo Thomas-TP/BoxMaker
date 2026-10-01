@@ -6,6 +6,17 @@ Each published version has [detailed release notes](docs/releases). The latest i
 
 No unreleased changes.
 
+## [1.0.0] - 2026-10-01
+
+- First stable release, with maintainer-reported print, transport, x64, Mac, and Bambu Studio validation.
+- Interactive SVG preview fallback for machines without WebGL, and rendering only when needed.
+- Automatic recovery of the last valid project; Rust validation and migration for project formats 1–5.
+- Stable updates by default, optional beta channel, and configurable checks on startup.
+- Signed macOS updater packages with in-app download, installation, and restart.
+- Clearer bilingual errors and a Bambu Studio 3MF import note.
+- Coalesced calculations during rapid input changes.
+- MIT open-source license and updated English user/developer documentation.
+
 ## [0.8.3] - 2026-09-28
 
 - English and French app interface and Microsoft Store listings, with language selection and automatic language detection.

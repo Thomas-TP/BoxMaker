@@ -8,6 +8,9 @@ const version: string = pkg.version;
 if (!/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/.test(version)) throw new Error("Version SemVer invalide.");
 const cargo = read("Cargo.toml").match(/\[workspace\.package\][\s\S]*?version\s*=\s*"([^"]+)"/)?.[1];
 const tauri = JSON.parse(read("src-tauri/tauri.conf.json")).version;
+const rustTauri = read("Cargo.lock").match(/name = "tauri"\r?\nversion = "([^"]+)"/)?.[1];
+const jsTauri = JSON.parse(read("node_modules/@tauri-apps/api/package.json")).version;
+if (rustTauri?.split(".").slice(0, 2).join(".") !== jsTauri.split(".").slice(0, 2).join(".")) throw new Error("Rust and JavaScript Tauri major/minor versions must match.");
 if (cargo !== version || tauri !== version) throw new Error("Les versions package.json, Cargo.toml et tauri.conf.json doivent correspondre.");
 for (const name of ["boxmaker", "boxmaker-core", "boxmaker-cli"]) {
   const lockVersion = read("Cargo.lock").match(new RegExp(`name = "${name}"\\r?\\nversion = "([^"]+)"`))?.[1];

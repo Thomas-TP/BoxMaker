@@ -57,7 +57,7 @@ Le calcul ne représente pas la souplesse réelle de l’ancrage, les concentrat
 
 Les tests contrôlent les six permutations, l’espace libre de l’objet, les volumes fermés et orientés, le verrouillage au repos, le dégagement après pression et le retrait initial à plusieurs jeux et tailles. Les fichiers STL/3MF sont relus après sérialisation pour contrôler leurs triangles et arêtes ; la géométrie finale est reconstruite sur une grille de 0,0001 mm avant triangulation. L’aperçu et les exports utilisent les mêmes maillages.
 
-Cette révision reste à imprimer. Le retour utilisateur sur l’impression précédente a motivé la reprise de la languette ; il ne valide pas la nouvelle version.
+Le 1er octobre 2026, le mainteneur a confirmé la validation physique de la fermeture actuelle et les essais de transport d’une boîte chargée. Ces retours valident son essai, sans fournir de mesure de force ni de durée de vie chiffrée. Voir le [registre de validation 1.0](VALIDATION.md). Le protocole ci-dessous reste utile pour de nouveaux filaments, réglages ou formats.
 
 1. Exporter une petite boîte, par exemple pour 30 × 40 × 10 mm, sans calage et avec les jeux par défaut. Garder son profil habituel de PLA pour que l’essai soit représentatif.
 2. Contrôler dans le slicer la continuité des parois, les fentes, les rails et le pont arrière. Boîte fond au plateau ; couvercle face lisse au plateau, nervures vers le haut.

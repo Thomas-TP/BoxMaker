@@ -1,5 +1,7 @@
 # Scellé affleurant v0.7.0 — verrou arrière à tête sacrificielle
 
+Le 1er octobre 2026, le mainteneur a confirmé le fonctionnement du scellé imprimé et ses essais de transport. Aucune force mesurée ni protocole chiffré n’a été fourni ; voir le [registre de validation 1.0](VALIDATION.md).
+
 Le scellé précédent ajoutait une oreille sur le côté, 14 mm à l’arrière et une surépaisseur au-dessus du couvercle. Le nouveau verrou occupe un coin arrière qui ne fait pas partie de l’espace garanti à l’objet. Pour une boîte ordinaire, l’enveloppe extérieure est **identique à celle sans scellé**. Une très petite boîte peut être élargie juste assez pour séparer le verrou du ressort de fermeture. Aucune pièce achetée n’est nécessaire.
 
 ## Fonctionnement

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <strong>Windows x64 and ARM64 · macOS</strong> · PLA 3D printing · Shipping estimates for Switzerland
+  <strong>Windows x64 and ARM64 · macOS</strong> · English & French · Free & open source
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
     <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="220" alt="Get Boxmaker from Microsoft Store">
   </a>
   &nbsp;&nbsp;
-  <a href="https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.3/Boxmaker-0.8.3-macOS.dmg">
+  <a href="https://github.com/Thomas-TP/BoxMaker/releases/download/v1.0.0/Boxmaker-1.0.0-macOS.dmg">
     <img src="assets/download-macos.svg" width="220" alt="Download Boxmaker for macOS">
   </a>
 </p>
@@ -28,7 +28,7 @@
   <br>
   <a href="https://apps.microsoft.com/detail/9MX7QLK05FJP">Microsoft Store listing</a>
   ·
-  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v0.8.3">Release notes and checksums</a>
+  <a href="https://github.com/Thomas-TP/BoxMaker/releases/tag/v1.0.0">Release notes and checksums</a>
   ·
   <a href="docs/USER_GUIDE.md">User guide</a>
 </p>
@@ -47,6 +47,8 @@
 | **👀 Preview before printing** | Rotate the 3D model and switch between closed, exploded, open, and print-layout views. |
 | **🧩 Three parts, one file** | Export the box, lid, and printable seal together in one 3MF. Each part is also available separately. |
 | **📦 Ready to plan a shipment** | Compare Swiss Post options using estimated dimensions and weight, then enter the actual weight of your packed box. |
+| **💾 Pick up where you left off** | Your last valid project is recovered automatically after closing or updating. Save project files to keep multiple designs. |
+| **🖥️ Preview on more computers** | Interactive 3D includes a fallback for virtual machines and computers without WebGL. |
 
 <p align="center">
   <img src="store/screenshots/Boxmaker-parts-en-1920x1080.png" width="960" alt="The box, lid, and seal laid out as three separate printable parts">
@@ -65,13 +67,17 @@ The app is available in **English and French**. It follows your system language 
 
 ## Install Boxmaker
 
-Choose the badge for your computer above. On Windows, the official web installer is **signed by Microsoft**, requires an internet connection, and selects x64 or ARM64 automatically. That installation receives updates from Microsoft Store. The same [Windows installer is attached to the GitHub release](https://github.com/Thomas-TP/BoxMaker/releases/download/v0.8.3/Boxmaker-Windows.exe).
+Choose the badge for your computer above. On Windows, the official web installer is **signed by Microsoft**, requires an internet connection, and selects x64 or ARM64 automatically. That installation receives updates from Microsoft Store. The same [Windows installer is attached to the GitHub release](https://github.com/Thomas-TP/BoxMaker/releases/download/v1.0.0/Boxmaker-Windows.exe). Windows ARM64 builds are available but have not yet been tested on a user device.
 
-**Mac: preview build, not yet tested on a physical Mac.** The DMG is free and has an ad hoc signature, but no Apple Developer certificate or notarization. After dragging Boxmaker to Applications, macOS may require you to allow the first launch in **System Settings → Privacy & Security → Open Anyway**. For now, download Mac updates from GitHub Releases.
+**Mac: one DMG for Intel and Apple Silicon.** Drag Boxmaker to Applications. The app has a free ad hoc signature, without Apple Developer ID or notarization. macOS may require you to allow the first launch in **System Settings → Privacy & Security → Open Anyway**. Version 1.0 adds in-app updates with verified update signatures; users of 0.8.x need to install the new DMG once. The maintainer has tested macOS use in VMware; native Intel and Apple Silicon tests were not separately reported.
+
+On Mac and Windows Velopack installations, **Updates** lets you opt into beta releases or disable startup checks. Stable releases are the default. Updates never restart the app without your action. Microsoft Store installations remain on the Store's stable channel.
 
 ## Before your first shipment
 
-> **Print and test a sample first.** The printable seal is still a mechanical prototype. Check how it closes and breaks with your printer and PLA before shipping anything valuable. Shipping rates and weights are estimates for domestic shipments within Switzerland. Weigh the closed parcel and confirm the final rate with Swiss Post.
+> **Check your own print and weigh your shipment.** The maintainer has validated the printed closure, seal, loaded-box transport, and Bambu Studio exports. Results still depend on your printer, PLA, settings, and contents. The seal is an opening indicator, not a guarantee against tampering. Shipping estimates cover domestic Switzerland and use the 2026 rate table. Confirm the final rate with Swiss Post.
+
+Bambu Studio may warn that a 3MF was not created by Bambu Studio. This is expected: import its geometry and choose your printer and filament settings. [Validation details →](docs/VALIDATION.md)
 
 <details>
 <summary><strong>Can I reuse the seal?</strong></summary>
@@ -93,6 +99,10 @@ Yes. Save the project on your computer and open it again in Boxmaker. Projects a
 No. Box design and export work locally without a Boxmaker account.
 
 </details>
+
+## Open source
+
+Boxmaker is available under the **[MIT license](LICENSE)**. Use it, modify it, and contribute improvements. Generated model files and printed boxes can be used commercially. [Contributing →](CONTRIBUTING.md)
 
 ---
 
