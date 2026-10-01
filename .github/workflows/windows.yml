@@ -166,9 +166,9 @@ jobs:
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             test -n "$TAURI_SIGNING_PRIVATE_KEY"
-            bunx tauri build --config src-tauri/tauri.macos.conf.json --target universal-apple-darwin --bundles dmg
+            bunx tauri build --config src-tauri/tauri.macos.conf.json --target universal-apple-darwin --bundles app,dmg
           else
-            bunx tauri build --config src-tauri/tauri.macos.conf.json --config '{"bundle":{"createUpdaterArtifacts":false}}' --target universal-apple-darwin --bundles dmg
+            bunx tauri build --config src-tauri/tauri.macos.conf.json --config '{"bundle":{"createUpdaterArtifacts":false}}' --target universal-apple-darwin --bundles app,dmg
           fi
       - name: Verify bundle and disk image
         shell: bash
@@ -303,7 +303,7 @@ jobs:
               'Boxmaker-Windows.exe' { 'Windows · Microsoft Store installer'; break }
               "Boxmaker-$version-macOS.dmg" { 'macOS · Intel and Apple Silicon'; break }
               '*-macOS-update.tar.gz' { 'macOS updates · package (not an installer)'; break }
-              'mac-updater.json' { 'macOS updates · signed manifest'; break }
+              'mac-updater.json' { 'macOS updates · signature metadata'; break }
               'SHA256SUMS.txt' { 'SHA-256 checksums'; break }
               'releases.win*.json' { 'Windows updates · metadata'; break }
               '*.nupkg' { 'Windows updates · package'; break }
