@@ -263,11 +263,11 @@ jobs:
           $remoteNames = @(gh release view $env:RELEASE_TAG --json assets --jq '.assets[].name')
           if ($LASTEXITCODE -ne 0) { throw 'Could not inspect uploaded release assets.' }
           $extras = @(Get-ChildItem -LiteralPath artifacts/public-release -File | Where-Object {
-            $_.Name -like 'assets.*.json' -or $_.Name -like 'RELEASES*' -or
+            $_.Name -like 'assets.*.json' -or $_.Name -eq 'RELEASES' -or $_.Name -like 'RELEASES-*' -or
             $_.Name -like '*-Portable.zip' -or $_.Name -like '*-Setup.exe'
           })
           $extras += @(Get-ChildItem -LiteralPath artifacts/public-release-arm64 -File | Where-Object {
-            $_.Name -like 'assets.*.json' -or $_.Name -like 'RELEASES*' -or
+            $_.Name -like 'assets.*.json' -or $_.Name -eq 'RELEASES' -or $_.Name -like 'RELEASES-*' -or
             $_.Name -like '*-Portable.zip' -or $_.Name -like '*-Setup.exe'
           })
           foreach ($extra in $extras) {
