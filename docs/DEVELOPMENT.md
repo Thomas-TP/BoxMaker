@@ -1,54 +1,51 @@
-# Développement de Boxmaker
+# Developing Boxmaker
 
-Les commandes ci-dessous se lancent depuis la racine du dépôt. Pour découvrir l’application, voir le [README](../README.md) et le [guide d’utilisation](USER_GUIDE.md).
+For app use, start with the [README](../README.md) and [user guide](USER_GUIDE.md).
 
-## Installer les outils
+## Tools and commands
 
-Prérequis Windows : Rust stable/MSVC et outils C++ de Visual Studio, Bun, WebView2. Outils testés : Rust 1.98.0, Bun 1.3.11, Velopack 1.2.0. Pour l’installateur Windows : .NET SDK 8 ou compatible et `dotnet tool restore`, qui installe la version de Velopack verrouillée dans `.config/dotnet-tools.json`.
+Windows requires Rust/MSVC, Visual Studio C++ tools including CMake, Bun, and WebView2. CI uses Rust 1.98.0 and the Bun version in `.bun-version`. Velopack is pinned in `.config/dotnet-tools.json`; restore it with .NET SDK 8 and `dotnet tool restore`.
 
-Sur macOS : installer les outils de ligne de commande Xcode, Rust, Bun et CMake. Le workflow GitHub compile un DMG universel avec `bunx tauri build --config src-tauri/tauri.macos.conf.json --target universal-apple-darwin --bundles dmg`. Il utilise une signature ad hoc sans identité Apple vérifiée. La compilation est automatisée, mais le fonctionnement sur un Mac utilisateur reste à tester.
+macOS requires Xcode command-line tools, Rust, Bun, and CMake. CI builds an Intel/Apple Silicon universal app with ad hoc signing. The updater signing key is supplied only to trusted release-tag builds through GitHub Actions, separately from Apple's OS signing.
 
 ```powershell
 bun install --frozen-lockfile
-bun run dev             # aperçu navigateur sur http://127.0.0.1:1420
-bun run desktop         # application native en développement
-bun run check           # Biome, TypeScript, tests Rust et Clippy
-bun run release:check   # cohérence des versions, changelog et notes
-bun run desktop:build   # ressources web embarquées, binaire Windows
-dotnet tool restore     # CLI Velopack verrouillée
-bun run package:windows -- -SkipBuild  # installateur et portable Velopack
-bun run package:msix -- -SkipBuild     # MSIX non signé pour Partner Center
+bun run dev
+bun run desktop
+bun run check
+bun run release:check
+bun run desktop:build
+dotnet tool restore
+bun run package:windows -- -SkipBuild
+bun run package:msix -- -SkipBuild
 ```
 
-Ne pas lancer `dev` et `desktop` simultanément : le port 1420 est partagé.
+Do not run `dev` and `desktop` simultaneously: both use port 1420. The Vite engine endpoint is a development adapter; the packaged app invokes Rust directly.
 
 ## Architecture
 
-- `crates/boxmaker-core` : validation, géométrie paramétrique, maillages, masse, tarifs, STL binaire et 3MF.
-- `crates/boxmaker-cli` : adaptateur JSON utilisé uniquement par le serveur Vite local. Aucun calcul métier dupliqué dans l’interface.
-- `src-tauri` : application native, commandes Rust, dialogue « Enregistrer sous » et initialisation Velopack avant Tauri sur Windows.
-- `src` : React/TypeScript strict et Three.js. Le rendu utilise les mêmes triangles que les exports.
-- `scripts/package-windows.ps1` : création du package Velopack depuis un répertoire de staging dédié.
+- `crates/boxmaker-core`: validation, project migration, parametric geometry, mesh generation, weight, postal rates, binary STL and standard 3MF.
+- `crates/boxmaker-cli`: JSON adapter for the local development server.
+- `src-tauri`: native app, file-save dialog, Windows Velopack updates and macOS Tauri updates.
+- `src`: React interface, English/French translation, local draft recovery, and Three.js previews.
+- `scripts`: repeatable validation and packaging commands.
 
-La nouvelle géométrie utilise Manifold via les bindings Rust `manifold-csg` pour les opérations booléennes, coins arrondis, nervures et languette. Son noyau C++ est compilé par CMake ; les scripts cherchent aussi CMake dans Visual Studio. Installer les outils CMake C++ si nécessaire. Le moteur rectiligne initial reste utilisé pour les anciens projets et la comparaison de matière. Aucun import de STL arbitraire n’est proposé.
+Manifold's pinned C++ kernel is compiled through CMake. The initial rectilinear geometry is retained for legacy projects. The preview and exports use the same meshes. SVGRenderer supplies an interactive fallback when WebGL is unavailable; it simplifies lighting and omits shadows. Rendering is scheduled after view changes rather than continuously. Parameter changes are debounced, with one running calculation and only the most recent pending request.
 
-## Validation et limites
+## Projects and errors
 
-- Les tests Rust couvrent les changements de tranche de poids, dimensions et rotations postales, encombrants, entrées invalides, export hors plateau, fermeture/orientation des maillages, volume et structure des exports.
-- `scripts/browser-smoke.js` est un parcours Playwright CLI pour vérifier les limites P1S/K2, les tarifs lettre, le poids absent, les exports individuels et complets, et la sauvegarde/réouverture d’un projet.
-- Le contrôle de plateau considère les pièces à plat avec rotation XY à 90° et une marge par bord. Les zones exclues spécifiques du slicer P1S ne sont pas modélisées. La vue « pièces à plat » n’est pas un placement automatique sur un plateau commun.
-- La masse est estimée avec une densité de 1,24 g/cm³ et le volume solide. Le slicer, la densité réelle du filament, l’infill et la pesée finale peuvent différer. Le coût matière exclut temps, énergie, calage et affranchissement.
-- **Prototype mécanique non homologué.** Cette révision n’a pas encore fait l’objet d’un essai physique. Le jeu, la fatigue de la languette PLA, les rails, la rupture du scellé et la protection du contenu doivent être testés physiquement. Le petit pont arrière, les lèvres des rails et les deux attaches du scellé sont à examiner dans le slicer. Voir [le choix mécanique](MECHANISM.md) et [le protocole du scellé affleurant](SEALING-v0.7.md).
-- Tarifs pour les envois intérieurs en Suisse seulement, datés de 2026 ; détails dans [docs/POSTAL.md](POSTAL.md).
+Project format 5 remains current for 1.0. Rust accepts versions 1–5 and validates types and ranges before replacing the current project. Legacy geometry is preserved. Geometry migrations invalidate measured shipment weight. Future formats prompt users to update, and damaged files leave the current project intact. The last successfully calculated project is stored locally for recovery; invalid edits do not overwrite it.
 
-## Velopack
+## Updates
 
-Sur Windows, l’application initialise `VelopackApp` avant toute initialisation de l’interface. L’installation Windows et les fichiers de release sont générés par Velopack ; le packaging NSIS de Tauri est désactivé. WebView2 est déclaré comme prérequis de l’installateur. Sur Mac, Tauri produit directement le DMG et la mise à jour intégrée est désactivée.
+Microsoft Store installations use Store updates. Existing Windows Velopack installations use GitHub, preserving `win` and `win-arm64` package channels. macOS uses the Tauri updater and verifies signatures before installation. Stable is the default; opting into beta includes prereleases without allowing a downgrade. Startup checks are configurable. Installation and restart require user action, with optional saving to a project file.
 
-Les mises à jour utilisent [les releases du dépôt GitHub](https://github.com/Thomas-TP/BoxMaker/releases), sans identifiants embarqués. Le bouton « Mises à jour » dans la barre d’outils permet de vérifier, lire les notes puis télécharger une version. « Installer et redémarrer » fonctionne sans enregistrer le projet ; une seconde action permet d’enregistrer puis d’installer. Les modifications non enregistrées sont perdues au redémarrage. Aucune vérification réseau, aucun téléchargement et aucun redémarrage ne sont déclenchés automatiquement au lancement. Les préversions sont incluses pendant la phase `0.x`.
+No account, analytics, or cloud project storage is required. See [privacy](PRIVACY.md).
 
-Le workflow GitHub vérifie et construit chaque push/PR pour Windows x64, Windows ARM64 et macOS universel. Un tag de version valide déclenche ensuite la publication de la release avec installateurs, portables, fichiers Velopack et SHA-256. Les MSIX non signés sont conservés temporairement en artefacts CI pour la soumission Store, mais ne sont pas envoyés à GitHub Releases. Velopack garde le canal `win` pour les installations x64 existantes et utilise `win-arm64` pour ARM64. Voir [le guide de release](RELEASING.md). Aucun compte externe n’est nécessaire pour concevoir une boîte localement.
+## Validation and limits
 
-Thomas Prud'homme figure dans les métadonnées de l’EXE Windows, sans que cela constitue une signature. L’EXE publié sur GitHub reste non signé. Le compte Microsoft Store affiche « ThomasTP » ; le MSIX de soumission porte exactement l’identité attribuée par Partner Center et n’est pas destiné à une installation directe. Le cycle réel installation → mise à jour depuis le Store reste à valider sur Windows. Voir [la procédure de publication](RELEASING.md#éditeur-windows-et-signature) et la [confidentialité](PRIVACY.md).
+Rust tests cover postal thresholds, orientation, printer bounds, meshes, exports, project migration, invalid input and closure geometry. The translation check covers interface and engine messages. The browser smoke script checks core user flows. CI builds all advertised platforms; user-device coverage is recorded separately in [VALIDATION.md](VALIDATION.md).
 
-Documentation : [intégration Rust Velopack](https://docs.velopack.io/getting-started/rust), [packaging](https://docs.velopack.io/packaging/overview).
+The maintainer confirmed physical closure, seal and loaded transport checks. Calculated PLA force remains an estimate, not a measured force. Printer exclusions, infill, filament properties, payload protection and postage must still be checked for a user's particular print. The app is not certified packaging.
+
+Boxmaker is licensed under MIT. Preserve third-party licenses and notices when redistributing dependencies. See [releasing](RELEASING.md).

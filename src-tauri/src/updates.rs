@@ -22,6 +22,7 @@ pub struct Updates(pub Mutex<Session>);
 pub struct Session {
     available: Option<UpdateInfo>,
     downloaded: bool,
+    beta: bool,
 }
 
 #[derive(Serialize)]
@@ -33,14 +34,13 @@ pub struct UpdateView {
     notes: Option<String>,
 }
 
-fn manager() -> Result<UpdateManager, String> {
-    // v0.x is a preview channel. No credentials are embedded in the application.
-    UpdateManager::new(GithubSource::new(REPOSITORY, None, true), None, None)
+fn manager(beta: bool) -> Result<UpdateManager, String> {
+    UpdateManager::new(GithubSource::new(REPOSITORY, None, beta), None, None)
         .map_err(|_| "Installez Boxmaker avec l’installateur Velopack pour utiliser les mises à jour intégrées.".into())
 }
 
 #[tauri::command]
-pub async fn check_update(app: tauri::AppHandle) -> Result<UpdateView, String> {
+pub async fn check_update(app: tauri::AppHandle, beta: bool) -> Result<UpdateView, String> {
     tauri::async_runtime::spawn_blocking(move || {
         if is_store_package() {
             return Ok(UpdateView {
@@ -50,7 +50,7 @@ pub async fn check_update(app: tauri::AppHandle) -> Result<UpdateView, String> {
                 notes: None,
             });
         }
-        let updater = match manager() {
+        let updater = match manager(beta) {
             Ok(value) => value,
             Err(message) => {
                 return Ok(UpdateView {
@@ -63,15 +63,21 @@ pub async fn check_update(app: tauri::AppHandle) -> Result<UpdateView, String> {
         };
         let shared = app.state::<Updates>();
         let mut session = shared.0.lock().map_err(|e| e.to_string())?;
-        let result = updater
-            .check_for_updates()
-            .map_err(|e| format!("Vérification impossible : {e}"))?;
         session.available = None;
         session.downloaded = false;
+        session.beta = beta;
+        let result = updater
+            .check_for_updates()
+            .map_err(|_| "Vérification impossible : vérifiez votre connexion puis réessayez.".to_string())?;
         match result {
             UpdateCheck::UpdateAvailable(info) => {
                 if info.IsDowngrade {
-                    return Err("Une version plus ancienne ne sera pas installée.".into());
+                    return Ok(UpdateView {
+                        state: "current",
+                        message: "Une version plus ancienne ne sera pas installée.".into(),
+                        version: None,
+                        notes: None,
+                    });
                 }
                 let view = UpdateView {
                     state: "available",
@@ -112,9 +118,9 @@ pub async fn download_update(app: tauri::AppHandle) -> Result<(), String> {
             .available
             .as_ref()
             .ok_or("Vérifiez d’abord les mises à jour.")?;
-        manager()?
+        manager(session.beta)?
             .download_updates(info, None)
-            .map_err(|e| format!("Téléchargement impossible : {e}"))?;
+            .map_err(|_| "Téléchargement impossible : vérifiez votre connexion et l’espace disque, puis réessayez.".to_string())?;
         session.downloaded = true;
         Ok(())
     })
@@ -137,10 +143,22 @@ pub async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
             .available
             .as_ref()
             .ok_or("Aucune mise à jour en attente.")?;
-        manager()?
+        manager(session.beta)?
             .apply_updates_and_restart(info)
-            .map_err(|e| format!("Installation impossible : {e}"))
+            .map_err(|_| {
+                "Installation impossible : fermez les autres instances de Boxmaker et réessayez."
+                    .into()
+            })
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub fn update_source() -> &'static str {
+    if is_store_package() {
+        "store"
+    } else {
+        "github"
+    }
 }

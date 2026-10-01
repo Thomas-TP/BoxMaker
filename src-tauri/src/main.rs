@@ -3,7 +3,10 @@
 use tauri_plugin_dialog::DialogExt;
 #[cfg(target_os = "windows")]
 mod updates;
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+#[path = "updates_macos.rs"]
+mod updates;
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 #[path = "updates_other.rs"]
 mod updates;
 
@@ -44,7 +47,7 @@ async fn save_file(
             return Ok(false);
         };
         let path = path.into_path().map_err(|e| e.to_string())?;
-        std::fs::write(path, bytes).map_err(|e| e.to_string())?;
+        std::fs::write(path, bytes).map_err(|_| "Impossible d’écrire le fichier. Choisissez un dossier accessible et vérifiez l’espace disque.".to_string())?;
         Ok(true)
     })
     .await
@@ -56,13 +59,17 @@ fn main() {
     velopack::VelopackApp::build()
         .set_auto_apply_on_startup(false)
         .run();
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "macos")]
+    let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    builder
         .plugin(tauri_plugin_dialog::init())
         .manage(updates::Updates::default())
         .invoke_handler(tauri::generate_handler![
             engine,
             save_file,
             app_platform,
+            updates::update_source,
             updates::check_update,
             updates::download_update,
             updates::install_update

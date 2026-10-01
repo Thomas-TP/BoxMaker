@@ -582,8 +582,56 @@ h1 {
   touch-action: none;
   inset: 89px 0 32px;
 }
-.three-view canvas {
+.three-view canvas,
+.three-view > svg {
   display: block;
+}
+
+.software-preview {
+  position: absolute;
+  bottom: 10px;
+  left: 16px;
+  max-width: calc(100% - 72px);
+  color: #c3d5f4;
+  font-size: 11px;
+  pointer-events: none;
+}
+.bambu-note {
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 10px;
+  margin-bottom: 0;
+  color: #64738b;
+  background: #f4f7fd;
+  border-radius: 8px;
+}
+
+.update-preferences {
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid #dce4f1;
+  border-radius: 12px;
+  background: #f7f9fd;
+}
+.update-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+.update-option input {
+  margin-top: 4px;
+  accent-color: #4b66ec;
+}
+.update-option span {
+  display: grid;
+  gap: 4px;
+}
+.update-option small,
+.update-preferences p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #63728b;
 }
 .view-tools {
   position: absolute;

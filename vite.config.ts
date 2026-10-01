@@ -28,9 +28,15 @@ export default defineConfig({
             if (body.length > 32_768) req.destroy();
           });
           req.on("end", () => {
-            const child = spawn(resolve("target/debug/boxmaker-cli.exe"), [], {
-              windowsHide: true,
-            });
+            const child = spawn(
+              resolve(
+                `target/debug/boxmaker-cli${process.platform === "win32" ? ".exe" : ""}`,
+              ),
+              [],
+              {
+                windowsHide: true,
+              },
+            );
             let output = "",
               error = "";
             child.stdout.on("data", (chunk) => {

@@ -17,6 +17,7 @@ $output = if ($OutputDir) { $OutputDir } else { Join-Path $projectRoot "artifact
 New-Item -ItemType Directory -Path $stage,$output -Force | Out-Null
 $targetRoot = if ($env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR } else { Join-Path $projectRoot 'target' }
 Copy-Item -LiteralPath (Join-Path $targetRoot 'release\boxmaker.exe') -Destination (Join-Path $stage 'Boxmaker.exe') -Force
+Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $stage -Force
 $packId = if ($Architecture -eq 'arm64') { 'Swiss3Design.Boxmaker.Arm64' } else { 'Swiss3Design.Boxmaker' }
 $packArgs = @('pack', '--packId', $packId, '--packVersion', $version, '--packDir', $stage, '--mainExe', 'Boxmaker.exe', '--packTitle', 'Boxmaker', '--packAuthors', "Thomas Prud'homme", '--outputDir', $output, '--framework', 'webview2', '--icon', (Join-Path $projectRoot 'src-tauri\icons\icon.ico'), '--releaseNotes', (Join-Path $projectRoot "docs\releases\v$version.md"))
 if ($Architecture -eq 'arm64') { $packArgs += @('--runtime', 'win-arm64', '--channel', 'win-arm64') }

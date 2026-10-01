@@ -13,13 +13,19 @@ pub struct UpdateView {
 }
 
 #[tauri::command]
-pub async fn check_update() -> Result<UpdateView, String> {
+pub async fn check_update(beta: bool) -> Result<UpdateView, String> {
+    let _ = beta;
     Ok(UpdateView {
         state: "unavailable",
         message: "Sur macOS, téléchargez les nouvelles versions depuis les releases GitHub. Cette version ne dispose pas de mise à jour intégrée.",
         version: None,
         notes: None,
     })
+}
+
+#[tauri::command]
+pub fn update_source() -> &'static str {
+    "unavailable"
 }
 
 #[tauri::command]
