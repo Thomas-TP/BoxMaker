@@ -60,13 +60,13 @@ jobs:
         shell: pwsh
         run: |
           & ./scripts/prepare-github-release.ps1 -SourceDir artifacts/releases -OutputDir artifacts/public-release
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: boxmaker-windows-x64
           path: artifacts/public-release/*
           if-no-files-found: error
           retention-days: 14
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !contains(github.ref_name, '-') }}
         with:
           name: boxmaker-store-submission-x64
@@ -121,13 +121,13 @@ jobs:
         run: |
           Get-ChildItem -LiteralPath artifacts/releases -File | Select-Object -ExpandProperty Name
           & ./scripts/prepare-github-release.ps1 -SourceDir artifacts/releases -OutputDir artifacts/public-release-arm64 -Architecture arm64
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: boxmaker-windows-arm64
           path: artifacts/public-release-arm64/*
           if-no-files-found: error
           retention-days: 14
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !contains(github.ref_name, '-') }}
         with:
           name: boxmaker-store-submission-arm64
@@ -192,7 +192,7 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             bun scripts/prepare-macos-updater.ts
           fi
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: boxmaker-macos-universal
           path: artifacts/mac-release/*
